@@ -1,0 +1,20 @@
+[
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/monitoring/logs",
+      "component": { "$codeRef": "LogsPage" }
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "monitoring-logs",
+      "name": "Logs",
+      "href": "/monitoring/logs",
+      "perspective": "admin",
+      "section": "observe"
+    }
+  }
+]

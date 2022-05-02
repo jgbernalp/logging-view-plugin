@@ -1,0 +1,8 @@
+.co-logs-expression-input {
+  display: flex;
+}
+
+.co-logs-expression-input__searchInput {
+  min-width: 300px;
+  margin-right: var(--pf-global--spacer--md);
+}

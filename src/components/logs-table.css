@@ -1,0 +1,66 @@
+.co-logs-table tr {
+  position: relative;
+}
+
+.co-logs-table__time {
+  --pf-c-table--cell--WhiteSpace: nowrap;
+  font-family: monospace;
+}
+
+.co-logs-table__message {
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.co-logs-table__resources {
+  --pf-c-table--cell--FontSize: var(--pf-global--FontSize--md);
+  margin-top: var(--pf-global--spacer--xs);
+}
+
+.co-logs-table__row::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: 3px;
+  left: 3px;
+  background-color: var(--pf-global--disabled-color--200);
+}
+
+.co-logs-table__row-child-expanded::before {
+  top: 0px;
+}
+
+.co-logs-table__row-parent-expanded::before {
+  bottom: -1px;
+}
+
+.co-logs-table__severity-error::before {
+  background-color: var(--pf-global--danger-color--100);
+}
+
+.co-logs-table__severity-info::before {
+  background-color: var(--pf-global--info-color--100);
+}
+
+.co-logs-table__severity-warning::before {
+  background-color: var(--pf-global--warning-color--100);
+}
+
+.co-logs-table.pf-m-compact tr:not(.pf-c-table__expandable-row) > *:first-child {
+  padding-left: 0;
+}
+
+.co-logs-table tr > :first-child::after {
+  --pf-c-table__expandable-row--after--BorderLeftWidth: none;
+}
+
+.co-logs-table__row-streaming{
+  text-align: center;
+  font-size: var(--pf-global--FontSize--xs);
+  --pf-c-table--cell--Color: white;
+  background-color: var(--pf-global--info-color--100);
+  --pf-c-table--cell--PaddingBottom: var(--pf-global--spacer--xs);
+  --pf-c-table--cell--PaddingTop: var(--pf-global--spacer--xs);
+}
