@@ -1,5 +1,7 @@
 export type MetricValue = Array<number | string>;
 
+export type TimeRange = { start: number; end: number };
+
 export const isStreamsResult = (result: unknown): result is StreamsResult =>
   result && (result as StreamsResult).resultType === 'streams';
 

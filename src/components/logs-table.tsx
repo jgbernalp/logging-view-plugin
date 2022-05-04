@@ -17,7 +17,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from '@patternfly/react-core';
-import { ColumnsIcon } from '@patternfly/react-icons';
+import { ColumnsIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import {
   ExpandableRowContent,
   ISortBy,
@@ -29,19 +29,28 @@ import {
   ThProps,
   Tr,
 } from '@patternfly/react-table';
+import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
 import * as React from 'react';
 import { ColumnManagementModal } from '../console-components/column-management-modal';
 import { DateFormat, dateToFormat } from '../date-utils';
-import { MetricValue, QueryRangeResponse } from '../logs.types';
+import {
+  isStreamsResult,
+  QueryRangeResponse,
+  StreamLogData,
+} from '../logs.types';
+import { Severity, severityFromString } from '../severity';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { TogglePlay } from './toggle-play';
 
-type LogsTableProps = {
+interface LogsTableProps {
   logsData?: QueryRangeResponse;
   isStreaming?: boolean;
-  onToggleStreaming?: (e: React.MouseEvent) => void;
-};
+  severityFilter?: Set<Severity>;
+  isLoading?: boolean;
+  onStreamingToggle?: (e: React.MouseEvent) => void;
+  onSeverityChange?: (severityFilter: Set<Severity>) => void;
+}
 
 type Resource = {
   type: string;
@@ -60,72 +69,51 @@ type LogsTableColumn = {
     b: T,
     directionMultiplier: number,
   ) => number;
-  value: (row: LogData) => TableCellValue;
+  value: (row: LogTableData) => TableCellValue;
 };
 
-type LogData = {
+type LogTableData = {
   time: string;
   timestamp: number;
   severity: string;
-  namespace: Resource;
-  resources: Array<Resource>;
+  namespace?: Resource;
+  resources?: Array<Resource>;
   message: string;
+  data: Record<string, string>;
 };
 
-const parseValueData = (value: MetricValue, index: number): LogData => {
-  const timestamp = parseFloat(String(value[0]));
+type LogRowProps = {
+  data: LogTableData;
+  title: string;
+  showResources: boolean;
+};
+
+const streamToTableData = (value: StreamLogData): LogTableData => {
+  const values = value.values[0];
+  const message = String(values?.[1]);
+  const timestamp = parseFloat(String(values?.[0]));
   const time = timestamp / 1e6;
   const formattedTime = dateToFormat(time, DateFormat.Full);
 
   return {
     time: formattedTime,
     timestamp,
-    severity: ['error', 'info', 'warning', ''][index % 3],
-    namespace: {
-      type: 'Pod',
-      id: ['default', 'openshift-console', 'openshift-monitoring', ''][
-        index % 3
-      ],
-      // TODO: resource link builder
-      link: '/k8s/ns/openshift-gitops/pods/cluster-autoscaler-6b8b8f66c7-k4v9q',
-    },
-    resources: [
-      {
-        type: 'Pod',
-        id: [
-          'cluster-autoscaler-6b8b8f66c7-k4v9q',
-          'other-f66c6b8b87-9qk4v',
-          'a_other-f66c6b8b87-9qk4v',
-          'b_other-f66c6b8b87-9qk4v',
-          'z_other-f66c6b8b87-9qk4v',
-        ][index % 5],
-        // TODO: resource link builder
-        link: '/k8s/ns/openshift-gitops/pods/cluster-autoscaler-6b8b8f66c7-k4v9q',
-      },
-      {
-        type: 'Container',
-        id: ['cluster-autoscaler', 'other', 'a_other', 'b_other', 'z_other'][
-          index % 5
-        ],
-        // TODO: resource link builder
-        link: 'k8s/ns/openshift-gitops/pods/cluster-autoscaler-6b8b8f66c7-k4v9q/containers/cluster-autoscaler',
-      },
-    ],
-    message: String(value[1]),
+    message,
+    severity: severityFromString(value.stream.level),
+    data: value.stream,
   };
 };
 
-const aggregateStreamLogData = (response?: QueryRangeResponse) => {
-  // TODO merge based on timestamp
-  // Handle matrix response
-  const data = response?.data.result ?? [];
+const aggregateStreamLogData = (
+  response?: QueryRangeResponse,
+): Array<LogTableData> => {
+  // TODO check timestamp aggregation for streams
+  // TODO check if display matrix data is required
+  if (isStreamsResult(response?.data)) {
+    return response.data.result.map(streamToTableData);
+  }
 
-  const aggregatedValues =
-    data.length === 1
-      ? data[0].values
-      : data.flatMap((stream) => stream.values);
-
-  return aggregatedValues.map(parseValueData);
+  return [];
 };
 
 const getSeverityClass = (severity: string) => {
@@ -137,7 +125,7 @@ const fixedColumns: Array<LogsTableColumn> = [
     title: 'Date',
     isDisabled: true,
     isSelected: true,
-    value: (row: LogData) => row.timestamp,
+    value: (row: LogTableData) => row.timestamp,
     // sort with an appropriate numeric comparator for big floats
     sort: (a, b, directionMultiplier) =>
       (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier,
@@ -146,7 +134,7 @@ const fixedColumns: Array<LogsTableColumn> = [
     title: 'Message',
     isDisabled: true,
     isSelected: true,
-    value: (row: LogData) => row.message,
+    value: (row: LogTableData) => row.message,
   },
 ];
 
@@ -155,7 +143,7 @@ const defaultAdditionalColumns: Array<LogsTableColumn> = [
     title: 'Resources',
     isDisabled: false,
     isSelected: false,
-    value: (row: LogData) =>
+    value: (row: LogTableData) =>
       row.resources.map((resource) => resource.id).join('_'),
     sort: (a, b, directionMultiplier) =>
       a.toString().localeCompare(b.toString()) * directionMultiplier,
@@ -164,7 +152,7 @@ const defaultAdditionalColumns: Array<LogsTableColumn> = [
     title: 'Namespace',
     isDisabled: false,
     isSelected: false,
-    value: (row: LogData) => row.namespace.id,
+    value: (row: LogTableData) => row.namespace.id,
     sort: (a, b, directionMultiplier) =>
       a.toString().localeCompare(b.toString()) * directionMultiplier,
   },
@@ -179,12 +167,6 @@ const getRowClassName = (index: number): string => {
   }
 
   return '';
-};
-
-type LogRowProps = {
-  data: LogData;
-  title: string;
-  showResources: boolean;
 };
 
 const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
@@ -229,10 +211,23 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
   return null;
 };
 
+const availableSeverityFilters: Array<Severity> = [
+  'critical',
+  'error',
+  'warning',
+  'debug',
+  'info',
+  'trace',
+  'unknown',
+];
+
 export const LogsTable: React.FC<LogsTableProps> = ({
   logsData,
   isStreaming,
-  onToggleStreaming,
+  onStreamingToggle,
+  severityFilter,
+  onSeverityChange,
+  isLoading,
   children,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(
@@ -241,9 +236,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   const [showResources, setShowResources] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
-  const [severityFilter, setSeverityFilter] = React.useState<Set<string>>(
-    new Set(),
-  );
   const [sortBy, setSortBy] = React.useState<ISortBy>({
     index: 0,
     direction: 'desc',
@@ -310,12 +302,12 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     _category: string | ToolbarChipGroup,
     chip: string | ToolbarChip,
   ) => {
-    severityFilter.delete(chip.toString());
-    setSeverityFilter(new Set(severityFilter));
+    severityFilter.delete(chip.toString() as Severity);
+    onSeverityChange?.(new Set(severityFilter));
   };
 
   const onDeleteSeverityGroup = () => {
-    setSeverityFilter(new Set());
+    onSeverityChange(new Set());
   };
 
   const onSeverityToggle = () => {
@@ -326,13 +318,18 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     _: React.MouseEvent | React.ChangeEvent,
     value: string | SelectOptionObject,
   ) => {
-    if (severityFilter.has(value.toString())) {
-      severityFilter.delete(value.toString());
-      setSeverityFilter(new Set(severityFilter));
+    const severityValue = value.toString() as Severity;
+    if (severityFilter.has(severityValue)) {
+      severityFilter.delete(severityValue);
     } else {
-      setSeverityFilter(new Set(severityFilter.add(value.toString())));
+      severityFilter.add(severityValue);
     }
+
+    onSeverityChange?.(new Set(severityFilter));
   };
+
+  const dataIsEmpty = sortedData.length === 0;
+  const hasMoreData = sortedData.length >= 200;
 
   let rowIndex = 0;
 
@@ -368,13 +365,9 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                   isOpen={isSeverityExpanded}
                   placeholderText="Severity"
                 >
-                  {[
-                    <SelectOption key="error" value="Error" />,
-                    <SelectOption key="warning" value="Warning" />,
-                    <SelectOption key="debug" value="Debug" />,
-                    <SelectOption key="info" value="Info" />,
-                    <SelectOption key="other" value="Other" />,
-                  ]}
+                  {availableSeverityFilters.map((severity) => (
+                    <SelectOption key={severity} value={severity} />
+                  ))}
                 </Select>
               </ToolbarFilter>
             </ToolbarGroup>
@@ -403,7 +396,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             </ToolbarGroup>
 
             <ToolbarGroup alignment={{ default: 'alignRight' }}>
-              <TogglePlay active={isStreaming} onClick={onToggleStreaming} />
+              <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
             </ToolbarGroup>
           </ToolbarContent>
         </Toolbar>
@@ -430,18 +423,36 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             </Tr>
           </Thead>
 
-          {isStreaming && (
+          {isStreaming ? (
             <Tbody>
-              <Tr>
-                <Td
-                  colSpan={visibleColumns.length + 2}
-                  key="col-streaming-row"
-                  className="co-logs-table__row-streaming"
-                >
+              <Tr className="co-logs-table__row-info co-logs-table__row-streaming">
+                <Td colSpan={visibleColumns.length + 2} key="streaming-row">
                   Streaming Logs...
                 </Td>
               </Tr>
             </Tbody>
+          ) : isLoading ? (
+            <Tbody>
+              <Tr className="co-logs-table__row-info">
+                <Td colSpan={visibleColumns.length + 2} key="loading-row">
+                  Loading...
+                </Td>
+              </Tr>
+            </Tbody>
+          ) : (
+            dataIsEmpty && (
+              <Tbody>
+                <Tr className="co-logs-table__row-info">
+                  <Td colSpan={visibleColumns.length + 2} key="data-empty-row">
+                    <ExclamationTriangleIcon
+                      color={warningColor.value}
+                      title="No datapoints found"
+                    />{' '}
+                    No datapoints found
+                  </Td>
+                </Tr>
+              </Tbody>
+            )
           )}
 
           {sortedData.map((value, index) => {
@@ -488,7 +499,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               >
                 <Td colSpan={visibleColumns.length + 2}>
                   <ExpandableRowContent>
-                    <LogDetail />
+                    <LogDetail data={value.data} />
                   </ExpandableRowContent>
                 </Td>
               </Tr>
@@ -504,6 +515,15 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               </Tbody>
             );
           })}
+          {hasMoreData && (
+            <Tbody>
+              <Tr className="co-logs-table__row-info">
+                <Td colSpan={visibleColumns.length + 2} key="more-data-row">
+                  More data available
+                </Td>
+              </Tr>
+            </Tbody>
+          )}
         </TableComposable>
       </div>
     </>
