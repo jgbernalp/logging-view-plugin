@@ -456,67 +456,69 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             )
           )}
 
-          {sortedData.map((value, index) => {
-            const isExpanded = expandedItems.has(rowIndex);
-            const severityClass = getSeverityClass(value.severity);
+          {!isLoading &&
+            sortedData.map((value, index) => {
+              const isExpanded = expandedItems.has(rowIndex);
+              const severityClass = getSeverityClass(value.severity);
 
-            const parentRow = (
-              <Tr
-                key={`${value.timestamp}-${rowIndex}`}
-                className={`co-logs-table__row ${severityClass} ${
-                  isExpanded ? 'co-logs-table__row-parent-expanded' : ''
-                }`}
-              >
-                <Td
-                  expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
-                />
+              const parentRow = (
+                <Tr
+                  key={`${value.timestamp}-${rowIndex}`}
+                  className={`co-logs-table__row ${severityClass} ${
+                    isExpanded ? 'co-logs-table__row-parent-expanded' : ''
+                  }`}
+                >
+                  <Td
+                    expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
+                  />
 
-                {visibleColumns.map((column, index) => {
-                  const content = (
-                    <LogRow
-                      data={value}
-                      title={column.title}
-                      showResources={showResources}
-                    />
-                  );
+                  {visibleColumns.map((column, index) => {
+                    const content = (
+                      <LogRow
+                        data={value}
+                        title={column.title}
+                        showResources={showResources}
+                      />
+                    );
 
-                  return content ? (
-                    <Td
-                      key={`col-${column.title}-row-${index}`}
-                      className={getRowClassName(index)}
-                    >
-                      {content}
-                    </Td>
-                  ) : null;
-                })}
-              </Tr>
-            );
+                    return content ? (
+                      <Td
+                        key={`col-${column.title}-row-${index}`}
+                        className={getRowClassName(index)}
+                      >
+                        {content}
+                      </Td>
+                    ) : null;
+                  })}
+                </Tr>
+              );
 
-            const childRow = isExpanded ? (
-              <Tr
-                className={`co-logs-table__row ${severityClass} co-logs-table__row-child-expanded`}
-                isExpanded={true}
-                key={`${value.timestamp}-${rowIndex}-child`}
-              >
-                <Td colSpan={visibleColumns.length + 2}>
-                  <ExpandableRowContent>
-                    <LogDetail data={value.data} />
-                  </ExpandableRowContent>
-                </Td>
-              </Tr>
-            ) : null;
+              const childRow = isExpanded ? (
+                <Tr
+                  className={`co-logs-table__row ${severityClass} co-logs-table__row-child-expanded`}
+                  isExpanded={true}
+                  key={`${value.timestamp}-${rowIndex}-child`}
+                >
+                  <Td colSpan={visibleColumns.length + 2}>
+                    <ExpandableRowContent>
+                      <LogDetail data={value.data} />
+                    </ExpandableRowContent>
+                  </Td>
+                </Tr>
+              ) : null;
 
-            // Expanded elements create an additional row in the table
-            rowIndex += isExpanded ? 2 : 1;
+              // Expanded elements create an additional row in the table
+              rowIndex += isExpanded ? 2 : 1;
 
-            return (
-              <Tbody isExpanded={isExpanded} key={index}>
-                {parentRow}
-                {childRow}
-              </Tbody>
-            );
-          })}
-          {hasMoreData && (
+              return (
+                <Tbody isExpanded={isExpanded} key={index}>
+                  {parentRow}
+                  {childRow}
+                </Tbody>
+              );
+            })}
+
+          {!isLoading && hasMoreData && (
             <Tbody>
               <Tr className="co-logs-table__row-info">
                 <Td colSpan={visibleColumns.length + 2} key="more-data-row">

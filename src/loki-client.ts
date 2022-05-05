@@ -33,12 +33,16 @@ const getSeverityFilter = (severity: Set<Severity>): string => {
   return `level=~"${severityFilters.join('|')}"`;
 };
 
-export const executeQueryRange = async ({
+export const executeQueryRange = ({
   query,
   start,
   end,
   severity,
-}: QueryRangeParams): Promise<QueryRangeResponse> => {
+}: QueryRangeParams): {
+  request: () => Promise<QueryRangeResponse>;
+  abort: AbortController['abort'];
+} => {
+  const abortController = new AbortController();
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
 
@@ -63,20 +67,29 @@ export const executeQueryRange = async ({
     LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
   }`;
 
-  const queryRequest = await fetch(
-    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
-    { headers: { Accept: 'application/json' } },
-  );
-  return queryRequest.json();
+  const request = () =>
+    fetch(
+      `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: abortController.signal,
+      },
+    ).then((response) => response.json());
+
+  return { request, abort: () => abortController.abort() };
 };
 
-export const executeHistogramQuery = async ({
+export const executeHistogramQuery = ({
   query,
   start,
   end,
   interval,
   severity,
-}: HistogramQuerParams): Promise<QueryRangeResponse> => {
+}: HistogramQuerParams): {
+  request: () => Promise<QueryRangeResponse>;
+  abort: AbortController['abort'];
+} => {
+  const abortController = new AbortController();
   const intervalString = intervalFromTimestamp(interval);
   const severityFilterExpression =
     severity.size > 0 ? `${getSeverityFilter(severity)}` : '';
@@ -91,7 +104,7 @@ export const executeHistogramQuery = async ({
   ]
     .filter(notEmptyString)
     .join(' | ');
-  const histogramQuery = `sum by (level) (count_over_time(${query}[${intervalString}] | ${pipeline}))`;
+  const histogramQuery = `sum by (level) (count_over_time(${query} | ${pipeline} [${intervalString}]))`;
 
   const params = {
     query: histogramQuery,
@@ -104,9 +117,14 @@ export const executeHistogramQuery = async ({
     LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
   }`;
 
-  const queryRequest = await fetch(
-    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
-    { headers: { Accept: 'application/json' } },
-  );
-  return queryRequest.json();
+  const request = () =>
+    fetch(
+      `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: abortController.signal,
+      },
+    ).then((response) => response.json());
+
+  return { request, abort: () => abortController.abort() };
 };

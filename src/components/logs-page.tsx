@@ -13,9 +13,8 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { Severity } from 'src/severity';
-import { QueryRangeResponse, TimeRange } from '../logs.types';
-import { executeHistogramQuery, executeQueryRange } from '../loki-client';
+import { useLogs } from '../hooks/useLogs';
+import { timeRangeOptions } from '../time-range-options';
 import { LogsHistogram } from './logs-histogram';
 import { LogsQueryInput } from './logs-query-input';
 import { LogsTable } from './logs-table';
@@ -105,91 +104,6 @@ const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = ({
   );
 };
 
-const timeRangeOptions = [
-  // TODO allow custom time range with calendar selector
-  // { key: 'CUSTOM', name: 'Custom time range' },
-  {
-    key: '5m',
-    name: 'Last 5 minutes',
-    span: 5 * 60 * 1000,
-    interval: 60 * 1000,
-  },
-  {
-    key: '15m',
-    name: 'Last 15 minutes',
-    span: 15 * 60 * 1000,
-    interval: 60 * 1000,
-  },
-  {
-    key: '30m',
-    name: 'Last 30 minutes',
-    span: 30 * 60 * 1000,
-    interval: 60 * 1000,
-  },
-  { key: '1h', name: 'Last 1 hour', span: 60 * 60 * 1000, interval: 60 * 1000 },
-  {
-    key: '2h',
-    name: 'Last 2 hours',
-    span: 2 * 60 * 60 * 1000,
-    interval: 60 * 1000,
-  },
-  {
-    key: '6h',
-    name: 'Last 6 hours',
-    span: 6 * 60 * 60 * 1000,
-    interval: 5 * 60 * 1000,
-  },
-  {
-    key: '12h',
-    name: 'Last 12 hours',
-    span: 12 * 60 * 60 * 1000,
-    interval: 10 * 60 * 1000,
-  },
-  {
-    key: '1d',
-    name: 'Last 1 day',
-    span: 24 * 60 * 60 * 1000,
-    interval: 15 * 60 * 1000,
-  },
-  {
-    key: '2d',
-    name: 'Last 2 days',
-    span: 2 * 24 * 60 * 60 * 1000,
-    interval: 30 * 60 * 1000,
-  },
-  {
-    key: '1w',
-    name: 'Last 1 week',
-    span: 7 * 24 * 60 * 60 * 1000,
-    interval: 60 * 60 * 1000,
-  },
-  {
-    key: '2w',
-    name: 'Last 2 weeks',
-    span: 14 * 24 * 60 * 60 * 1000,
-    interval: 60 * 60 * 1000,
-  },
-];
-
-const defaultTimeSpan = (): number => {
-  const defaultSpan = timeRangeOptions.find(
-    (item) => item.key === DEFAULT_TIME_RANGE,
-  ).span;
-  return defaultSpan;
-};
-
-const timeRangeFromSpan = (span: number): TimeRange => ({
-  start: Date.now() - span,
-  end: Date.now(),
-});
-
-const intervalFromSpan = (timeSpan: number): number => {
-  return (
-    timeRangeOptions.find((option) => option.span === timeSpan).interval ??
-    60 * 1000
-  );
-};
-
 interface TimeRangeDropdownProps {
   initialValue?: string;
   onChange?: (offset: number) => void;
@@ -240,68 +154,33 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 };
 
 const LogsPage: React.FunctionComponent = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isStreaming, setIsStreaming] = React.useState(false);
-  const [timeSpan, setTimeSpan] = React.useState<number>(defaultTimeSpan);
-  const [query, setQuery] = React.useState<string | undefined>('{job=~".+"}');
-  const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
-    new Set(),
-  );
-  const [error, setError] = React.useState<unknown>();
-  const [logsData, setLogsData] = React.useState<
-    QueryRangeResponse | undefined
-  >();
-  const [histogramData, setHistogramData] = React.useState<
-    QueryRangeResponse | undefined
-  >();
+  const {
+    error,
+    query,
+    histogramData,
+    isLoadingLogsData,
+    isLoadingHistogramData,
+    isStreaming,
+    logsData,
+    getLogs,
+    getHistogram,
+    setQuery,
+    severityFilter,
+    setSeverityFilter,
+    setTimeSpan,
+    setIsStreaming,
+    timeRange,
+    interval,
+  } = useLogs({ initialQuery: '{ job =~ ".+" }' });
 
   const handleToggleStreaming = () => {
     setIsStreaming(!isStreaming);
   };
 
-  const handleSeverityChange = (severity: Set<Severity>) => {
-    setSeverityFilter(severity);
+  const runQuery = () => {
+    getLogs();
+    getHistogram();
   };
-
-  const handleTimeRangeChange = (span: number) => {
-    setTimeSpan(span);
-  };
-
-  const runQuery = async () => {
-    try {
-      const { start, end } = timeRangeFromSpan(timeSpan);
-
-      setIsLoading(true);
-      setError(null);
-
-      const queryResponse = await executeQueryRange({
-        query,
-        start,
-        end,
-        severity: severityFilter,
-      });
-
-      setLogsData(queryResponse);
-
-      const histogramResponse = await executeHistogramQuery({
-        query,
-        start,
-        end,
-        severity: severityFilter,
-        interval: intervalFromSpan(timeSpan),
-      });
-
-      setHistogramData(histogramResponse);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    runQuery();
-  }, [timeSpan, severityFilter]);
 
   return (
     <PageSection>
@@ -313,7 +192,7 @@ const LogsPage: React.FunctionComponent = () => {
           <Flex>
             <TimeRangeDropdown
               initialValue={DEFAULT_TIME_RANGE}
-              onChange={handleTimeRangeChange}
+              onChange={setTimeSpan}
             />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
@@ -332,9 +211,9 @@ const LogsPage: React.FunctionComponent = () => {
 
         <LogsHistogram
           histogramData={histogramData}
-          timeRange={timeRangeFromSpan(timeSpan)}
-          interval={intervalFromSpan(timeSpan)}
-          isLoading={isLoading}
+          timeRange={timeRange}
+          interval={interval}
+          isLoading={isLoadingHistogramData}
         />
 
         <LogsTable
@@ -342,8 +221,8 @@ const LogsPage: React.FunctionComponent = () => {
           isStreaming={isStreaming}
           severityFilter={severityFilter}
           onStreamingToggle={handleToggleStreaming}
-          onSeverityChange={handleSeverityChange}
-          isLoading={isLoading}
+          onSeverityChange={setSeverityFilter}
+          isLoading={isLoadingLogsData}
         >
           <LogsQueryInput
             initialValue={query}
