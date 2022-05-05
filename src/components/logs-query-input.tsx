@@ -18,9 +18,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   const debounceValue = useDebounce(searchValue);
 
   React.useEffect(() => {
-    if (debounceValue !== initialValue) {
-      onChange?.(debounceValue);
-    }
+    onChange?.(debounceValue);
   }, [debounceValue]);
 
   const handleSearchChange = (value: string) => {

@@ -91,7 +91,7 @@ export const executeHistogramQuery = async ({
   ]
     .filter(notEmptyString)
     .join(' | ');
-  const histogramQuery = `sum by (level) (count_over_time(${query} | ${pipeline} [${intervalString}])) `;
+  const histogramQuery = `sum by (level) (count_over_time(${query}[${intervalString}] | ${pipeline}))`;
 
   const params = {
     query: histogramQuery,

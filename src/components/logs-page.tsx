@@ -60,16 +60,23 @@ const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = ({
     setDelay(selectedDelay);
   };
 
-  React.useEffect(() => {
+  const restartTimer = (callRefreshImmediately = true) => {
     clearTimer();
 
     if (delay !== 0) {
-      onRefresh?.();
+      if (callRefreshImmediately) {
+        onRefresh?.();
+      }
       timer.current = setInterval(() => onRefresh?.(), delay);
     }
 
     return () => clearTimer();
-  }, [delay]);
+  };
+
+  React.useEffect(() => restartTimer(), [delay]);
+
+  // Avoid calling refresh immediately when onRefresh callback has changed
+  React.useEffect(() => restartTimer(false), [onRefresh]);
 
   const toggleIsOpen = () => {
     setIsOpen(!isOpen);
@@ -130,25 +137,25 @@ const timeRangeOptions = [
     key: '6h',
     name: 'Last 6 hours',
     span: 6 * 60 * 60 * 1000,
-    interval: 60 * 1000,
+    interval: 5 * 60 * 1000,
   },
   {
     key: '12h',
     name: 'Last 12 hours',
     span: 12 * 60 * 60 * 1000,
-    interval: 60 * 1000,
+    interval: 10 * 60 * 1000,
   },
   {
     key: '1d',
     name: 'Last 1 day',
     span: 24 * 60 * 60 * 1000,
-    interval: 60 * 60 * 1000,
+    interval: 15 * 60 * 1000,
   },
   {
     key: '2d',
     name: 'Last 2 days',
     span: 2 * 24 * 60 * 60 * 1000,
-    interval: 60 * 60 * 1000,
+    interval: 30 * 60 * 1000,
   },
   {
     key: '1w',
@@ -236,9 +243,7 @@ const LogsPage: React.FunctionComponent = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [timeSpan, setTimeSpan] = React.useState<number>(defaultTimeSpan);
-  const [query, setQuery] = React.useState<string | undefined>(
-    '{filename=~".+"}',
-  );
+  const [query, setQuery] = React.useState<string | undefined>('{job=~".+"}');
   const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
     new Set(),
   );
