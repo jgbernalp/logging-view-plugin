@@ -31,8 +31,14 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
     setSearchValue('');
   };
 
-  const handleRunQuery = async () => {
+  const handleRunQuery = () => {
     onRun?.(searchValue);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onRun?.(searchValue);
+    }
   };
 
   return (
@@ -43,6 +49,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
         value={searchValue}
         onChange={handleSearchChange}
         onClear={handleSearchClear}
+        onKeyDown={handleKeyDown}
       />
       {onRun && (
         <Button variant="primary" onClick={handleRunQuery}>

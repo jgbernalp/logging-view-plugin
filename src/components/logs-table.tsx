@@ -179,7 +179,7 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
           <div className="co-logs-table__message">{data.message}</div>
           {showResources && (
             <Split className="co-logs-table__resources" hasGutter>
-              {data.resources.map((resource) => (
+              {data.resources?.map((resource) => (
                 <SplitItem key={resource.id}>
                   <ResourceLink kind={resource.type} name={resource.id} />
                 </SplitItem>
@@ -202,9 +202,9 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
       );
     case 'Namespace': {
       const namespace = data.namespace;
-      return (
+      return namespace ? (
         <ResourceLink key={namespace.id} kind="Namespace" name={namespace.id} />
-      );
+      ) : null;
     }
   }
 
@@ -295,6 +295,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
       }
     }
 
+    setExpandedItems(new Set());
+
     return tableData;
   }, [tableData, visibleColumns, sortBy]);
 
@@ -335,7 +337,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
   return (
     <>
-      {/* TODO: use ColumnManagementModal from console project */}
       <ColumnManagementModal
         columns={fixedColumns.concat(additionalColumns)}
         isModalOpen={isModalOpen}

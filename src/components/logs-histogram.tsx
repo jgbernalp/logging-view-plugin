@@ -129,9 +129,10 @@ const getTicksFromTimeRange = (
 ): Array<number> => {
   const units = Math.floor((timeRange.end - timeRange.start) / interval);
 
-  const ticksArray = Array.from({ length: units + 1 })
+  const ticksArray = Array.from({ length: units })
     .fill('')
-    .map((_, index) => timeRange.start + index * interval);
+    .map((_, index) => timeRange.start + index * interval)
+    .concat([timeRange.end]);
 
   return ticksArray;
 };

@@ -11,7 +11,7 @@ interface LogDetailProps {
 }
 
 export const LogDetail: React.FC<LogDetailProps> = ({ data }) => (
-  <DescriptionList isAutoFit>
+  <DescriptionList isAutoFit isHorizontal isCompact isFluid>
     {Object.keys(data)
       .filter((key) => key !== '_')
       .map((key) => (
