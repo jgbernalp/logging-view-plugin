@@ -1,8 +1,19 @@
+/**
+ * Converts a value into a string with scale prefix
+ * @example
+ * valueWithScalePrefix(1000) // 1k
+ * valueWithScalePrefix(1000000) // 1M
+ * valueWithScalePrefix(2340) // 2.3k
+ */
 export const valueWithScalePrefix = (value: number): string => {
   return value > 1000
-    ? `${Math.round(value / 1000)}k`
+    ? `${(value / 1000).toFixed(
+        Math.round(value / 1000) === value / 1000 ? 0 : 1,
+      )}k`
     : value > 1000000
-    ? `${Math.round(value / 1000000)}M`
+    ? `${(value / 1000000).toFixed(
+        Math.round(value / 1000000) === value / 1000000 ? 0 : 1,
+      )}M`
     : String(value);
 };
 
@@ -16,7 +27,11 @@ const d = h * 24;
 const w = d * 7;
 const units = { w, d, h, m, s };
 
-export const intervalFromTimestamp = (timestamp: number): string => {
+/**
+ * Converts a timesamp into a string in prometheus duration format `[0-9]+[smhdwy]`
+ * https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
+ */
+export const durationFromTimestamp = (timestamp: number): string => {
   if (!Number.isFinite(timestamp) || timestamp < 0) {
     return '';
   }

@@ -25,8 +25,6 @@ import './logs-histogram.css';
 
 const GRAPH_HEIGHT = 130;
 const LEFT_PADDING = 50;
-const START_DOMAIN_PADDING = 8;
-const END_DOMAIN_PADDING = 8;
 const BOTTOM_PADDING = 50;
 const TOP_PADDING = 10;
 
@@ -127,12 +125,12 @@ const getTicksFromTimeRange = (
   timeRange: TimeRange,
   interval: number,
 ): Array<number> => {
-  const units = Math.floor((timeRange.end - timeRange.start) / interval);
+  const units = Math.ceil((timeRange.end - timeRange.start) / interval);
 
   const ticksArray = Array.from({ length: units })
     .fill('')
-    .map((_, index) => timeRange.start + index * interval)
-    .concat([timeRange.end]);
+    .map((_, index) => timeRange.start + index * interval);
+  // .concat([timeRange.end]);
 
   return ticksArray;
 };
@@ -269,7 +267,9 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 left: LEFT_PADDING,
                 right: 20,
               }}
-              domain={{ x: [timeRange.start, timeRange.end] }}
+              domain={{
+                x: [timeRange.start, timeRange.end],
+              }}
               scale={{ x: 'time', y: 'linear' }}
               containerComponent={
                 <ChartVoronoiContainer
@@ -283,10 +283,10 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 />
               }
               width={width}
-              domainPadding={10}
+              domainPadding={{ x: 30, y: 10 }}
             >
               <ChartAxis
-                tickValues={groupsCharts.ticks}
+                tickCount={60}
                 fixLabelOverlap
                 tickFormat={(tick: number) =>
                   dateToFormat(tick, DateFormat.TimeShort)
@@ -297,13 +297,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 dependentAxis
                 tickFormat={valueWithScalePrefix}
               />
-              <ChartStack
-                domainPadding={{
-                  x: [START_DOMAIN_PADDING, END_DOMAIN_PADDING],
-                }}
-              >
-                {groupsCharts.charts}
-              </ChartStack>
+              <ChartStack>{groupsCharts.charts}</ChartStack>
             </Chart>
           ) : (
             <div>No data</div>

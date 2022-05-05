@@ -1,6 +1,6 @@
 import { QueryRangeResponse } from './logs.types';
 import { Severity, severityAbbreviations } from './severity';
-import { intervalFromTimestamp, notEmptyString } from './value-utils';
+import { durationFromTimestamp, notEmptyString } from './value-utils';
 
 // const LOKI_FRONT_END_ENDPOINT = '/api/proxy/logging-view-plugin/loki';
 const LOKI_FRONT_END_ENDPOINT = 'http://localhost';
@@ -90,7 +90,7 @@ export const executeHistogramQuery = ({
   abort: AbortController['abort'];
 } => {
   const abortController = new AbortController();
-  const intervalString = intervalFromTimestamp(interval);
+  const intervalString = durationFromTimestamp(interval);
   const severityFilterExpression =
     severity.size > 0 ? `${getSeverityFilter(severity)}` : '';
 
