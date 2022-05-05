@@ -31,7 +31,7 @@ import {
 } from '@patternfly/react-table';
 import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
 import * as React from 'react';
-import { ColumnManagementModal } from '../console-components/column-management-modal';
+import { ColumnManagementModal } from './column-management-modal';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isStreamsResult,
