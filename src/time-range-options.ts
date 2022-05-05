@@ -5,13 +5,13 @@ export const timeRangeOptions = [
     key: '5m',
     name: 'Last 5 minutes',
     span: 5 * 60 * 1000,
-    interval: 60 * 1000,
+    interval: 15 * 1000,
   },
   {
     key: '15m',
     name: 'Last 15 minutes',
     span: 15 * 60 * 1000,
-    interval: 60 * 1000,
+    interval: 30 * 1000,
   },
   {
     key: '30m',

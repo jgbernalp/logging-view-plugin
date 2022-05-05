@@ -1,5 +1,6 @@
 export enum DateFormat {
   TimeShort,
+  TimeMed,
   Full,
 }
 
@@ -12,9 +13,15 @@ export const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   second: 'numeric',
 });
 
-export const timeFormatter = new Intl.DateTimeFormat(undefined, {
+export const timeShortFormatter = new Intl.DateTimeFormat(undefined, {
   hour: 'numeric',
   minute: 'numeric',
+});
+
+export const timeMedFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
 });
 
 export const dateToFormat = (
@@ -23,7 +30,10 @@ export const dateToFormat = (
 ): string => {
   switch (format) {
     case DateFormat.TimeShort:
-      return timeFormatter.format(date);
+      return timeShortFormatter.format(date);
+      break;
+    case DateFormat.TimeMed:
+      return timeMedFormatter.format(date);
       break;
     case DateFormat.Full:
       {

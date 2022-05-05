@@ -42,6 +42,7 @@ type ChartData = {
   x: number;
   y: number;
   name: string;
+  time: string;
   label: string;
 };
 
@@ -98,42 +99,41 @@ const aggregateMetricsLogData = (
 const metricValueToChartData = (
   group: Severity,
   value: Array<MetricValue>,
+  interval: number,
 ): Array<ChartData> =>
   value.map((metric) => {
     const time = parseFloat(String(metric[0])) * 1000;
-    const formattedTime = dateToFormat(time, DateFormat.TimeShort);
+    const formattedTime = dateToFormat(
+      time,
+      interval < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
+    );
 
     return {
       x: time,
       y: parseInt(String(metric[1]), 10),
       name: group,
+      time: formattedTime,
       label: `${formattedTime} ${group}: ${metric[1]}`,
     };
   });
 
-const getChartsData = (data: HistogramData): HistogramChartData => {
+const getChartsData = (
+  data: HistogramData,
+  interval: number,
+): HistogramChartData => {
   const charts: HistogramChartData = {} as HistogramChartData;
 
   Object.keys(data).forEach((group: Severity) => {
-    charts[group] = metricValueToChartData(group, data[group]);
+    charts[group] = metricValueToChartData(group, data[group], interval);
   });
 
   return charts;
 };
 
-const getTicksFromTimeRange = (
+const tickCountFromTimeRange = (
   timeRange: TimeRange,
   interval: number,
-): Array<number> => {
-  const units = Math.ceil((timeRange.end - timeRange.start) / interval);
-
-  const ticksArray = Array.from({ length: units })
-    .fill('')
-    .map((_, index) => timeRange.start + index * interval);
-  // .concat([timeRange.end]);
-
-  return ticksArray;
-};
+): number => Math.ceil((timeRange.end - timeRange.start) / interval);
 
 const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
   const {
@@ -149,9 +149,7 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
     <>
       <ChartLegendTooltip
         {...props}
-        title={(datum: ChartData) =>
-          dateToFormat(datum.x, DateFormat.TimeShort)
-        }
+        title={(datum: ChartData) => datum.time}
         constrainToVisibleArea
       />
       <line
@@ -205,9 +203,9 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     }
 
     const data = aggregateMetricsLogData(histogramData);
-    const chartsData = getChartsData(data);
+    const chartsData = getChartsData(data, interval);
 
-    const ticks: Array<number> = getTicksFromTimeRange(timeRange, interval);
+    const tickCount = tickCountFromTimeRange(timeRange, interval);
 
     const availableGroups = SORTED_CHART_GROUPS.filter(
       (group: Severity) =>
@@ -219,14 +217,13 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
         key={`${group}-${index}`}
         data={chartsData[group]}
         name={group}
-        barWidth={(width / ticks.length) * 0.8}
+        barWidth={(width / tickCount) * 0.8}
         style={{ data: { fill: getSeverityColor(group) } }}
         labelComponent={<g />}
       />
     ));
 
     return {
-      ticks,
       charts,
       availableGroups,
     };
@@ -289,7 +286,12 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 tickCount={60}
                 fixLabelOverlap
                 tickFormat={(tick: number) =>
-                  dateToFormat(tick, DateFormat.TimeShort)
+                  dateToFormat(
+                    tick,
+                    interval < 60 * 1000
+                      ? DateFormat.TimeMed
+                      : DateFormat.TimeShort,
+                  )
                 }
               />
               <ChartAxis
