@@ -44,7 +44,7 @@ systemctl reboot
 ## Deployment on cluster
 
 You can deploy the plugin to a cluster by instantiating the provided
-[Plugin Resources](logging-view-plugin-resources.yaml). It will use the latest plugin
+[Plugin Resources](logging-view-plugin-resources.yml). It will use the latest plugin
 docker image and run a light-weight nginx HTTP server to serve the plugin's assets.
 
 ```sh
