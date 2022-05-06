@@ -9,7 +9,11 @@ import {
   getResizeObserver,
 } from '@patternfly/react-charts';
 import { Card, CardBody, Flex, FlexItem } from '@patternfly/react-core';
-import { ExclamationTriangleIcon } from '@patternfly/react-icons';
+import {
+  ExclamationTriangleIcon,
+  ExclamationCircleIcon,
+} from '@patternfly/react-icons';
+import dangerColor from '@patternfly/react-tokens/dist/esm/global_danger_color_100';
 import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
 import * as React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
@@ -54,6 +58,7 @@ interface LogHistogramProps {
   timeRange: TimeRange;
   interval?: number;
   isLoading?: boolean;
+  error?: unknown;
 }
 
 const resultHasAbreviation = (
@@ -179,6 +184,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   histogramData,
   timeRange,
   isLoading,
+  error,
   interval = 60 * 1000,
 }) => {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -245,7 +251,12 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     <Card>
       <CardBody>
         <div ref={containerRef} style={{ height: GRAPH_HEIGHT }}>
-          {isLoading ? (
+          {error ? (
+            <CenteredContainer>
+              <ExclamationCircleIcon color={dangerColor.value} title="Error" />{' '}
+              {(error as Error).message || String(error)}
+            </CenteredContainer>
+          ) : isLoading ? (
             <CenteredContainer>Loading...</CenteredContainer>
           ) : dataIsEmpty ? (
             <CenteredContainer>

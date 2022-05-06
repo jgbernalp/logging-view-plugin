@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Dropdown,
   DropdownItem,
@@ -155,13 +154,14 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 
 const LogsPage: React.FunctionComponent = () => {
   const {
-    error,
     query,
     histogramData,
+    histogramError,
     isLoadingLogsData,
     isLoadingHistogramData,
     isStreaming,
     logsData,
+    logsError,
     getLogs,
     getHistogram,
     setQuery,
@@ -203,17 +203,12 @@ const LogsPage: React.FunctionComponent = () => {
           </Flex>
         </Flex>
 
-        {error && (
-          <Alert isInline title="Error" variant="danger">
-            {(error as Error).message || String(error)}
-          </Alert>
-        )}
-
         <LogsHistogram
           histogramData={histogramData}
           timeRange={timeRange}
           interval={interval}
           isLoading={isLoadingHistogramData}
+          error={histogramError}
         />
 
         <LogsTable
@@ -223,6 +218,7 @@ const LogsPage: React.FunctionComponent = () => {
           onStreamingToggle={handleToggleStreaming}
           onSeverityChange={setSeverityFilter}
           isLoading={isLoadingLogsData}
+          error={logsError}
         >
           <LogsQueryInput
             initialValue={query}

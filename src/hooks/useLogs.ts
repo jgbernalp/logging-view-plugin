@@ -124,7 +124,6 @@ export const useLogs = ({
   initialTimeSpan?: number;
 }) => {
   const [query, setQuery] = React.useState(initialQuery);
-  const [error, setError] = React.useState<unknown>();
   const [isStreaming, setIsStreaming] = React.useState<boolean>(false);
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
@@ -139,6 +138,8 @@ export const useLogs = ({
       timeSpan,
       isLoadingHistogramData,
       isLoadingLogsData,
+      histogramError,
+      logsError,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -152,7 +153,6 @@ export const useLogs = ({
       const { start, end } = timeRangeFromSpan(localTimeSpan);
 
       dispatch({ type: 'logsRequest' });
-      setError(null);
 
       if (logsAbort.current) {
         logsAbort.current();
@@ -226,7 +226,6 @@ export const useLogs = ({
   }, [severityFilter, localTimeSpan]);
 
   return {
-    error,
     query,
     severityFilter,
     logsData,
@@ -240,7 +239,9 @@ export const useLogs = ({
     setTimeSpan,
     setIsStreaming,
     getLogs,
+    logsError,
     getHistogram,
+    histogramError,
     timeRange: timeRangeFromSpan(timeSpan),
     interval: intervalFromSpan(timeSpan),
   };

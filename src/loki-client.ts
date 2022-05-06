@@ -33,16 +33,51 @@ const getSeverityFilter = (severity: Set<Severity>): string => {
   return `level=~"${severityFilters.join('|')}"`;
 };
 
+class TimeoutError extends Error {
+  constructor(url: string, ms: number) {
+    super(`Request: ${url} timed out after ${ms}ms.`);
+  }
+}
+
+type CancellableFetch<T> = { request: () => Promise<T>; abort: () => void };
+
+const cancellableFetch = <T>(
+  input: RequestInfo,
+  init?: RequestInit & { timeout: number },
+): CancellableFetch<T> => {
+  const abortController = new AbortController();
+  const abort = () => abortController.abort();
+
+  const fetchPromise = fetch(input, {
+    ...init,
+    headers: { Accept: 'application/json' },
+    signal: abortController.signal,
+  }).then((response) => response.json());
+
+  const timeout = init?.timeout ?? 30 * 1000;
+
+  if (timeout <= 0) {
+    return { request: () => fetchPromise, abort };
+  }
+
+  const timeoutPromise = new Promise<T>((_resolve, reject) => {
+    setTimeout(
+      () => reject(new TimeoutError(input.toString(), timeout)),
+      timeout,
+    );
+  });
+
+  const request = () => Promise.race([fetchPromise, timeoutPromise]);
+
+  return { request, abort };
+};
+
 export const executeQueryRange = ({
   query,
   start,
   end,
   severity,
-}: QueryRangeParams): {
-  request: () => Promise<QueryRangeResponse>;
-  abort: AbortController['abort'];
-} => {
-  const abortController = new AbortController();
+}: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
 
@@ -67,16 +102,9 @@ export const executeQueryRange = ({
     LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
   }`;
 
-  const request = () =>
-    fetch(
-      `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
-      {
-        headers: { Accept: 'application/json' },
-        signal: abortController.signal,
-      },
-    ).then((response) => response.json());
-
-  return { request, abort: () => abortController.abort() };
+  return cancellableFetch<QueryRangeResponse>(
+    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+  );
 };
 
 export const executeHistogramQuery = ({
@@ -85,11 +113,7 @@ export const executeHistogramQuery = ({
   end,
   interval,
   severity,
-}: HistogramQuerParams): {
-  request: () => Promise<QueryRangeResponse>;
-  abort: AbortController['abort'];
-} => {
-  const abortController = new AbortController();
+}: HistogramQuerParams): CancellableFetch<QueryRangeResponse> => {
   const intervalString = durationFromTimestamp(interval);
   const severityFilterExpression =
     severity.size > 0 ? `${getSeverityFilter(severity)}` : '';
@@ -117,14 +141,7 @@ export const executeHistogramQuery = ({
     LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
   }`;
 
-  const request = () =>
-    fetch(
-      `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
-      {
-        headers: { Accept: 'application/json' },
-        signal: abortController.signal,
-      },
-    ).then((response) => response.json());
-
-  return { request, abort: () => abortController.abort() };
+  return cancellableFetch<QueryRangeResponse>(
+    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+  );
 };

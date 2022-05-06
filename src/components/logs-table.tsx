@@ -17,7 +17,11 @@ import {
   ToolbarItem,
   Tooltip,
 } from '@patternfly/react-core';
-import { ColumnsIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
+import {
+  ColumnsIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+} from '@patternfly/react-icons';
 import {
   ExpandableRowContent,
   ISortBy,
@@ -29,9 +33,9 @@ import {
   ThProps,
   Tr,
 } from '@patternfly/react-table';
+import dangerColor from '@patternfly/react-tokens/dist/esm/global_danger_color_100';
 import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
 import * as React from 'react';
-import { ColumnManagementModal } from './column-management-modal';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isStreamsResult,
@@ -39,6 +43,7 @@ import {
   StreamLogData,
 } from '../logs.types';
 import { Severity, severityFromString } from '../severity';
+import { ColumnManagementModal } from './column-management-modal';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { TogglePlay } from './toggle-play';
@@ -50,6 +55,7 @@ interface LogsTableProps {
   isLoading?: boolean;
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
+  error?: unknown;
 }
 
 type Resource = {
@@ -229,6 +235,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   onSeverityChange,
   isLoading,
   children,
+  error,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(
     new Set(),
@@ -424,7 +431,19 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             </Tr>
           </Thead>
 
-          {isStreaming ? (
+          {error ? (
+            <Tbody>
+              <Tr className="co-logs-table__row-info">
+                <Td colSpan={visibleColumns.length + 2} key="error-row">
+                  <ExclamationCircleIcon
+                    color={dangerColor.value}
+                    title="Error"
+                  />{' '}
+                  {(error as Error).message || String(error)}
+                </Td>
+              </Tr>
+            </Tbody>
+          ) : isStreaming ? (
             <Tbody>
               <Tr className="co-logs-table__row-info co-logs-table__row-streaming">
                 <Td colSpan={visibleColumns.length + 2} key="streaming-row">
