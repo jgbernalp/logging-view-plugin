@@ -2,9 +2,7 @@ import { QueryRangeResponse } from './logs.types';
 import { Severity, severityAbbreviations } from './severity';
 import { durationFromTimestamp, notEmptyString } from './value-utils';
 
-// const LOKI_FRONT_END_ENDPOINT = '/api/proxy/logging-view-plugin/loki';
-const LOKI_FRONT_END_ENDPOINT = 'http://localhost';
-const LOKI_FRONT_END_PORT = 3200;
+const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend/';
 
 type QueryRangeParams = {
   query: string;
@@ -98,12 +96,8 @@ export const executeQueryRange = ({
     limit: '200',
   };
 
-  const serviceUrl = `${LOKI_FRONT_END_ENDPOINT}${
-    LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
-  }`;
-
   return cancellableFetch<QueryRangeResponse>(
-    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    `${LOKI_ENDPOINT}loki/api/v1/query_range?${new URLSearchParams(params)}`,
   );
 };
 
@@ -137,11 +131,7 @@ export const executeHistogramQuery = ({
     step: intervalString,
   };
 
-  const serviceUrl = `${LOKI_FRONT_END_ENDPOINT}${
-    LOKI_FRONT_END_PORT ? `:${String(LOKI_FRONT_END_PORT)}` : ''
-  }`;
-
   return cancellableFetch<QueryRangeResponse>(
-    `${serviceUrl}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    `${LOKI_ENDPOINT}loki/api/v1/query_range?${new URLSearchParams(params)}`,
   );
 };

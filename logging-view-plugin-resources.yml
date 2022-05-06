@@ -108,7 +108,7 @@ apiVersion: v1
     sessionAffinity: None
     proxy:
       - type: Service
-        alias: loki
+        alias: backend
         service:
           name: lokistack-sample-query-frontend-http
           namespace: openshift-logging
