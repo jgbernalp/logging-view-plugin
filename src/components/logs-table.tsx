@@ -50,6 +50,7 @@ import { TogglePlay } from './toggle-play';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
+  showStreaming?: boolean;
   isStreaming?: boolean;
   severityFilter?: Set<Severity>;
   isLoading?: boolean;
@@ -235,6 +236,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   onSeverityChange,
   isLoading,
   children,
+  showStreaming = false,
   error,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(
@@ -403,9 +405,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               </ToolbarItem>
             </ToolbarGroup>
 
-            <ToolbarGroup alignment={{ default: 'alignRight' }}>
-              <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
-            </ToolbarGroup>
+            {showStreaming && (
+              <ToolbarGroup alignment={{ default: 'alignRight' }}>
+                <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
+              </ToolbarGroup>
+            )}
           </ToolbarContent>
         </Toolbar>
 
