@@ -54,8 +54,11 @@ interface LogsTableProps {
   isStreaming?: boolean;
   severityFilter?: Set<Severity>;
   isLoading?: boolean;
+  hasMoreLogsData?: boolean;
+  isLoadingMore?: boolean;
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
+  onLoadMore?: (lastTimestamp: number) => void;
   error?: unknown;
 }
 
@@ -235,7 +238,10 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   severityFilter,
   onSeverityChange,
   isLoading,
+  isLoadingMore,
   children,
+  onLoadMore,
+  hasMoreLogsData,
   showStreaming = false,
   error,
 }) => {
@@ -340,9 +346,12 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   };
 
   const dataIsEmpty = sortedData.length === 0;
-  const hasMoreData = sortedData.length >= 200;
 
   let rowIndex = 0;
+
+  const handleLoadMore = () => {
+    onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
+  };
 
   return (
     <>
@@ -541,11 +550,15 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               );
             })}
 
-          {!isLoading && hasMoreData && (
+          {!isLoading && hasMoreLogsData && (
             <Tbody>
-              <Tr className="co-logs-table__row-info">
+              <Tr
+                className="co-logs-table__row-info co-logs-table__row-more-data"
+                onClick={handleLoadMore}
+              >
                 <Td colSpan={visibleColumns.length + 2} key="more-data-row">
-                  More data available
+                  More data available,{' '}
+                  {isLoadingMore ? 'loading...' : 'click to load'}
                 </Td>
               </Tr>
             </Tbody>

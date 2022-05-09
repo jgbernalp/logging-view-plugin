@@ -83,3 +83,7 @@
   background-color: var(--pf-global--info-color--100);
   --pf-c-table--cell--Color: white;
 }
+
+.co-logs-table__row-more-data td{
+  cursor: pointer;
+}

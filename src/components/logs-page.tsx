@@ -158,11 +158,14 @@ const LogsPage: React.FunctionComponent = () => {
     histogramData,
     histogramError,
     isLoadingLogsData,
+    isLoadingMoreLogsData,
     isLoadingHistogramData,
     isStreaming,
     logsData,
     logsError,
     getLogs,
+    getMoreLogs,
+    hasMoreLogsData,
     getHistogram,
     setQuery,
     severityFilter,
@@ -175,6 +178,12 @@ const LogsPage: React.FunctionComponent = () => {
 
   const handleToggleStreaming = () => {
     setIsStreaming(!isStreaming);
+  };
+
+  const handleLoadMoreData = (lastTimestamp: number) => {
+    if (!isLoadingMoreLogsData) {
+      getMoreLogs(lastTimestamp);
+    }
   };
 
   const runQuery = () => {
@@ -217,7 +226,10 @@ const LogsPage: React.FunctionComponent = () => {
           severityFilter={severityFilter}
           onStreamingToggle={handleToggleStreaming}
           onSeverityChange={setSeverityFilter}
+          onLoadMore={handleLoadMoreData}
           isLoading={isLoadingLogsData}
+          isLoadingMore={isLoadingMoreLogsData}
+          hasMoreLogsData={hasMoreLogsData}
           error={logsError}
         >
           <LogsQueryInput

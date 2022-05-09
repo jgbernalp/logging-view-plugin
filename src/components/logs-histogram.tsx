@@ -33,13 +33,13 @@ const BOTTOM_PADDING = 50;
 const TOP_PADDING = 10;
 
 const SORTED_CHART_GROUPS: Array<Severity> = [
-  'unknown',
-  'trace',
-  'info',
-  'debug',
-  'warning',
-  'error',
   'critical',
+  'error',
+  'warning',
+  'debug',
+  'info',
+  'trace',
+  'unknown',
 ];
 
 type ChartData = {

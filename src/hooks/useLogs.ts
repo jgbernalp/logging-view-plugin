@@ -1,10 +1,16 @@
 import * as React from 'react';
-import { QueryRangeResponse, TimeRange } from '../logs.types';
+import {
+  isMatrixResult,
+  isStreamsResult,
+  QueryRangeResponse,
+  TimeRange,
+} from '../logs.types';
 import { executeHistogramQuery, executeQueryRange } from '../loki-client';
 import { Severity } from '../severity';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
+const DEFAULT_LOGS_LIMIT = 200;
 
 type State = {
   timeSpan: number;
@@ -12,8 +18,10 @@ type State = {
   histogramData?: QueryRangeResponse;
   histogramError?: unknown;
   isLoadingLogsData: boolean;
+  isLoadingMoreLogsData: boolean;
   logsData?: QueryRangeResponse;
   logsError?: unknown;
+  hasMoreLogsData?: boolean;
 };
 
 type Action =
@@ -31,7 +39,16 @@ type Action =
       type: 'logsRequest';
     }
   | {
+      type: 'moreLogsRequest';
+    }
+  | {
       type: 'logsResponse';
+      payload: {
+        logsData: QueryRangeResponse;
+      };
+    }
+  | {
+      type: 'moreLogsResponse';
       payload: {
         logsData: QueryRangeResponse;
       };
@@ -48,6 +65,28 @@ type Action =
         error: unknown;
       };
     };
+
+const appendData = (
+  response?: QueryRangeResponse,
+  nextResponse?: QueryRangeResponse,
+): QueryRangeResponse => {
+  if (
+    response &&
+    nextResponse &&
+    ((isMatrixResult(response.data) && isMatrixResult(nextResponse.data)) ||
+      (isStreamsResult(response.data) && isStreamsResult(nextResponse.data)))
+  ) {
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        result: [...response.data.result, ...nextResponse.data.result],
+      } as QueryRangeResponse['data'],
+    };
+  }
+
+  return response;
+};
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -78,17 +117,35 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: true,
         logsData: undefined,
         logsError: undefined,
+        hasMoreLogsData: false,
+      };
+    case 'moreLogsRequest':
+      return {
+        ...state,
+        isLoadingMoreLogsData: true,
+        logsError: undefined,
       };
     case 'logsResponse':
       return {
         ...state,
         isLoadingLogsData: false,
         logsData: action.payload.logsData,
+        hasMoreLogsData:
+          action.payload.logsData.data.result.length >= DEFAULT_LOGS_LIMIT,
+      };
+    case 'moreLogsResponse':
+      return {
+        ...state,
+        isLoadingMoreLogsData: false,
+        logsData: appendData(state.logsData, action.payload.logsData),
+        hasMoreLogsData:
+          action.payload.logsData.data.result.length >= DEFAULT_LOGS_LIMIT,
       };
     case 'logsError':
       return {
         ...state,
         isLoadingLogsData: false,
+        isLoadingMoreLogsData: false,
         logsError: action.payload.error,
       };
 
@@ -138,15 +195,52 @@ export const useLogs = ({
       timeSpan,
       isLoadingHistogramData,
       isLoadingLogsData,
+      isLoadingMoreLogsData,
       histogramError,
       logsError,
+      hasMoreLogsData,
     },
     dispatch,
   ] = React.useReducer(reducer, {
     timeSpan: initialTimeSpan,
     isLoadingHistogramData: false,
     isLoadingLogsData: false,
+    isLoadingMoreLogsData: false,
+    hasMoreLogsData: false,
   });
+
+  const getMoreLogs = async (lastTimestamp: number) => {
+    try {
+      const { start } = timeRangeFromSpan(localTimeSpan);
+
+      dispatch({ type: 'moreLogsRequest' });
+
+      if (logsAbort.current) {
+        logsAbort.current();
+      }
+
+      const { request, abort } = executeQueryRange({
+        query,
+        start,
+        end: lastTimestamp,
+        severity: severityFilter,
+        limit: DEFAULT_LOGS_LIMIT,
+      });
+
+      logsAbort.current = abort;
+
+      const queryResponse = await request();
+
+      dispatch({
+        type: 'moreLogsResponse',
+        payload: { logsData: queryResponse },
+      });
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        dispatch({ type: 'logsError', payload: { error } });
+      }
+    }
+  };
 
   const getLogs = async () => {
     try {
@@ -163,6 +257,7 @@ export const useLogs = ({
         start,
         end,
         severity: severityFilter,
+        limit: DEFAULT_LOGS_LIMIT,
       });
 
       logsAbort.current = abort;
@@ -230,6 +325,7 @@ export const useLogs = ({
     severityFilter,
     logsData,
     isLoadingLogsData,
+    isLoadingMoreLogsData,
     isStreaming,
     histogramData,
     isLoadingHistogramData,
@@ -239,6 +335,8 @@ export const useLogs = ({
     setTimeSpan,
     setIsStreaming,
     getLogs,
+    getMoreLogs,
+    hasMoreLogsData,
     logsError,
     getHistogram,
     histogramError,

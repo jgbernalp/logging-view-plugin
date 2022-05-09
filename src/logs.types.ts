@@ -2,10 +2,14 @@ export type MetricValue = Array<number | string>;
 
 export type TimeRange = { start: number; end: number };
 
-export const isStreamsResult = (result: unknown): result is StreamsResult =>
+export const isStreamsResult = (
+  result: MatrixResult | StreamsResult,
+): result is StreamsResult =>
   result && (result as StreamsResult).resultType === 'streams';
 
-export const isMatrixResult = (result: unknown): result is MatrixResult =>
+export const isMatrixResult = (
+  result: MatrixResult | StreamsResult,
+): result is MatrixResult =>
   result && (result as MatrixResult).resultType === 'matrix';
 
 export interface MetricLogData {
@@ -28,9 +32,9 @@ export interface StreamsResult {
   result: Array<StreamLogData>;
 }
 
-export type QueryRangeResponse = {
+export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
   status: string;
-  data: (MatrixResult | StreamsResult) & {
+  data: T & {
     stats: {
       ingester: Record<string, number>;
       store: Record<string, number>;

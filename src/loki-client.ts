@@ -9,6 +9,7 @@ type QueryRangeParams = {
   start: number;
   end: number;
   severity?: Set<Severity>;
+  limit?: number;
 };
 
 type HistogramQuerParams = {
@@ -75,6 +76,7 @@ export const executeQueryRange = ({
   start,
   end,
   severity,
+  limit = 200,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
@@ -93,7 +95,7 @@ export const executeQueryRange = ({
     query: queryWithFilters,
     start: String(start * 1000000),
     end: String(end * 1000000),
-    limit: '200',
+    limit: String(limit),
   };
 
   return cancellableFetch<QueryRangeResponse>(
