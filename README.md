@@ -2,7 +2,8 @@
 
 This plugin adds the logging view into the 'observe' menu in the OpenShift console. It requires OpenShift 4.10.
 
-This plugin connects to the [loki-operator](https://github.com/grafana/loki/tree/main/operator), so make sure is installed in your cluster.
+This plugin connects to a loki backend, you can install the [loki-operator](https://github.com/grafana/loki/tree/main/operator)
+in your cluster.
 
 ## Development
 
@@ -13,6 +14,8 @@ to build and run the plugin. To run OpenShift console in a container, either
 
 ### Running locally
 
+Make sure you have loki running on `http://localhost:3100`
+
 In one terminal window, run:
 
 1. `yarn install`
@@ -21,11 +24,17 @@ In one terminal window, run:
 In another terminal window, run:
 
 1. `oc login` (requires [oc](https://console.redhat.com/openshift/downloads) and an [OpenShift cluster](https://console.redhat.com/openshift/create))
-2. `scripts/environment.sh`
-3. `scripts/start-console.sh` (requires [Docker](https://www.docker.com) or [podman 3.2.0+](https://podman.io))
+2. `yarn run start-console` (requires [Docker](https://www.docker.com) or [podman 3.2.0+](https://podman.io))
 
-This will run the OpenShift console in a container connected to the cluster
-you've logged into. The plugin HTTP server runs on port 9001 with CORS enabled.
+This will create an environment file `scripts/env.list` and run the OpenShift console
+in a container connected to the cluster you've logged into. The plugin HTTP server
+runs on port 9001 with CORS enabled.
+
+The dynamic console plugin is configured to connect to loki using a proxy
+`/api/proxy/plugin/logging-view-plugin/backend/`, in local mode this will point
+to `http://localhost:3100`. You can disable this by re-running the console with
+`yarn run start-console -c` to use the cluster proxy
+
 Navigate to <http://localhost:9000/monitoring/logs> to see the running plugin.
 
 #### Running start-console with Apple silicon and podman
