@@ -1,5 +1,6 @@
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import {
+  Alert,
   Button,
   Checkbox,
   Select,
@@ -17,11 +18,7 @@ import {
   ToolbarItem,
   Tooltip,
 } from '@patternfly/react-core';
-import {
-  ColumnsIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-} from '@patternfly/react-icons';
+import { ColumnsIcon } from '@patternfly/react-icons';
 import {
   ExpandableRowContent,
   ISortBy,
@@ -33,8 +30,6 @@ import {
   ThProps,
   Tr,
 } from '@patternfly/react-table';
-import dangerColor from '@patternfly/react-tokens/dist/esm/global_danger_color_100';
-import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
 import * as React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
@@ -63,9 +58,8 @@ interface LogsTableProps {
 }
 
 type Resource = {
-  type: string;
-  id: string;
-  link: string;
+  kind: string;
+  name: string;
 };
 
 type TableCellValue = string | number | Resource | Array<Resource>;
@@ -86,7 +80,7 @@ type LogTableData = {
   time: string;
   timestamp: number;
   severity: string;
-  namespace?: Resource;
+  namespace?: string;
   resources?: Array<Resource>;
   message: string;
   data: Record<string, string>;
@@ -96,6 +90,23 @@ type LogRowProps = {
   data: LogTableData;
   title: string;
   showResources: boolean;
+};
+
+const parseResources = (data: Record<string, string>): Array<Resource> => {
+  const container = {
+    kind: 'Container',
+    name: data['kubernetes_container_name'],
+  };
+  const namespace = {
+    kind: 'Namespace',
+    name: data['kubernetes_namespace_name'],
+  };
+  const pod = {
+    kind: 'Pod',
+    name: data['kubernetes_pod_name'],
+  };
+
+  return [namespace, pod, container];
 };
 
 const streamToTableData = (value: StreamLogData): LogTableData => {
@@ -111,6 +122,8 @@ const streamToTableData = (value: StreamLogData): LogTableData => {
     message,
     severity: severityFromString(value.stream.level),
     data: value.stream,
+    resources: parseResources(value.stream),
+    namespace: value.stream['kubernetes_namespace_name'],
   };
 };
 
@@ -154,7 +167,7 @@ const defaultAdditionalColumns: Array<LogsTableColumn> = [
     isDisabled: false,
     isSelected: false,
     value: (row: LogTableData) =>
-      row.resources.map((resource) => resource.id).join('_'),
+      row.resources.map((resource) => resource.name).join('_'),
     sort: (a, b, directionMultiplier) =>
       a.toString().localeCompare(b.toString()) * directionMultiplier,
   },
@@ -162,7 +175,7 @@ const defaultAdditionalColumns: Array<LogsTableColumn> = [
     title: 'Namespace',
     isDisabled: false,
     isSelected: false,
-    value: (row: LogTableData) => row.namespace.id,
+    value: (row: LogTableData) => row.namespace,
     sort: (a, b, directionMultiplier) =>
       a.toString().localeCompare(b.toString()) * directionMultiplier,
   },
@@ -190,8 +203,8 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
           {showResources && (
             <Split className="co-logs-table__resources" hasGutter>
               {data.resources?.map((resource) => (
-                <SplitItem key={resource.id}>
-                  <ResourceLink kind={resource.type} name={resource.id} />
+                <SplitItem key={resource.name}>
+                  <ResourceLink kind={resource.kind} name={resource.name} />
                 </SplitItem>
               ))}
             </Split>
@@ -203,9 +216,9 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
         <>
           {data.resources.map((resource) => (
             <ResourceLink
-              key={resource.id}
-              kind={resource.type}
-              name={resource.id}
+              key={resource.name}
+              kind={resource.kind}
+              name={resource.name}
             />
           ))}
         </>
@@ -213,7 +226,7 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
     case 'Namespace': {
       const namespace = data.namespace;
       return namespace ? (
-        <ResourceLink key={namespace.id} kind="Namespace" name={namespace.id} />
+        <ResourceLink key={namespace} kind="Namespace" name={namespace} />
       ) : null;
     }
   }
@@ -448,11 +461,14 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Tbody>
               <Tr className="co-logs-table__row-info">
                 <Td colSpan={visibleColumns.length + 2} key="error-row">
-                  <ExclamationCircleIcon
-                    color={dangerColor.value}
-                    title="Error"
-                  />{' '}
-                  {(error as Error).message || String(error)}
+                  <div className="co-logs-table__row-error">
+                    <Alert
+                      variant="danger"
+                      isInline
+                      isPlain
+                      title={(error as Error).message || String(error)}
+                    />
+                  </div>
                 </Td>
               </Tr>
             </Tbody>
@@ -477,11 +493,12 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               <Tbody>
                 <Tr className="co-logs-table__row-info">
                   <Td colSpan={visibleColumns.length + 2} key="data-empty-row">
-                    <ExclamationTriangleIcon
-                      color={warningColor.value}
+                    <Alert
+                      variant="warning"
+                      isInline
+                      isPlain
                       title="No datapoints found"
-                    />{' '}
-                    No datapoints found
+                    />
                   </Td>
                 </Tr>
               </Tbody>

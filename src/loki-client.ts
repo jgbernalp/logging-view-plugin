@@ -81,11 +81,7 @@ export const executeQueryRange = ({
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
 
-  const pipeline = [
-    'label_format level=lvl',
-    'logfmt',
-    severityFilterExpression,
-  ]
+  const pipeline = ['label_format level=lvl', 'json', severityFilterExpression]
     .filter(notEmptyString)
     .join(' | ');
 
@@ -118,9 +114,9 @@ export const executeHistogramQuery = ({
   // TODO remove intentionally skip formatting errors
   const pipeline = [
     'label_format level=lvl',
-    'logfmt',
+    'json',
     severityFilterExpression,
-    '__error__!="LogfmtParserErr"',
+    '__error__!="JSONParserErr"',
   ]
     .filter(notEmptyString)
     .join(' | ');

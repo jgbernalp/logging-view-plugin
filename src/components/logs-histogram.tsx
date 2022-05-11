@@ -8,13 +8,7 @@ import {
   ChartVoronoiContainer,
   getResizeObserver,
 } from '@patternfly/react-charts';
-import { Card, CardBody, Flex, FlexItem } from '@patternfly/react-core';
-import {
-  ExclamationTriangleIcon,
-  ExclamationCircleIcon,
-} from '@patternfly/react-icons';
-import dangerColor from '@patternfly/react-tokens/dist/esm/global_danger_color_100';
-import warningColor from '@patternfly/react-tokens/dist/esm/global_warning_color_100';
+import { Alert, Card, CardBody, Flex, FlexItem } from '@patternfly/react-core';
 import * as React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
@@ -253,18 +247,23 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
         <div ref={containerRef} style={{ height: GRAPH_HEIGHT }}>
           {error ? (
             <CenteredContainer>
-              <ExclamationCircleIcon color={dangerColor.value} title="Error" />{' '}
-              {(error as Error).message || String(error)}
+              <Alert
+                variant="danger"
+                isInline
+                isPlain
+                title={(error as Error).message || String(error)}
+              />
             </CenteredContainer>
           ) : isLoading ? (
             <CenteredContainer>Loading...</CenteredContainer>
           ) : dataIsEmpty ? (
             <CenteredContainer>
-              <ExclamationTriangleIcon
-                color={warningColor.value}
+              <Alert
+                variant="warning"
+                isInline
+                isPlain
                 title="No datapoints found"
-              />{' '}
-              No datapoints found
+              />
             </CenteredContainer>
           ) : histogramData ? (
             <Chart

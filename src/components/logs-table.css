@@ -87,3 +87,8 @@
 .co-logs-table__row-more-data td{
   cursor: pointer;
 }
+
+.co-logs-table__row-error{
+  display: flex;
+  justify-content: center;
+}
