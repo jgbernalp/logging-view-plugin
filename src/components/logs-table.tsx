@@ -109,22 +109,25 @@ const parseResources = (data: Record<string, string>): Array<Resource> => {
   return [namespace, pod, container];
 };
 
-const streamToTableData = (value: StreamLogData): LogTableData => {
-  const values = value.values[0];
-  const message = String(values?.[1]);
-  const timestamp = parseFloat(String(values?.[0]));
-  const time = timestamp / 1e6;
-  const formattedTime = dateToFormat(time, DateFormat.Full);
+const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
+  const values = stream.values;
 
-  return {
-    time: formattedTime,
-    timestamp,
-    message,
-    severity: severityFromString(value.stream.level),
-    data: value.stream,
-    resources: parseResources(value.stream),
-    namespace: value.stream['kubernetes_namespace_name'],
-  };
+  return values.map((value) => {
+    const message = String(value[1]);
+    const timestamp = parseFloat(String(value[0]));
+    const time = timestamp / 1e6;
+    const formattedTime = dateToFormat(time, DateFormat.Full);
+
+    return {
+      time: formattedTime,
+      timestamp,
+      message,
+      severity: severityFromString(stream.stream.level),
+      data: stream.stream,
+      resources: parseResources(stream.stream),
+      namespace: stream.stream['kubernetes_namespace_name'],
+    };
+  });
 };
 
 const aggregateStreamLogData = (
@@ -133,7 +136,7 @@ const aggregateStreamLogData = (
   // TODO check timestamp aggregation for streams
   // TODO check if display matrix data is required
   if (isStreamsResult(response?.data)) {
-    return response.data.result.map(streamToTableData);
+    return response.data.result.flatMap(streamToTableData);
   }
 
   return [];
@@ -143,15 +146,20 @@ const getSeverityClass = (severity: string) => {
   return severity ? `co-logs-table__severity-${severity}` : '';
 };
 
+// sort with an appropriate numeric comparator for big floats
+const numericComparator = <T extends TableCellValue>(
+  a: T,
+  b: T,
+  directionMultiplier: number,
+): number => (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier;
+
 const fixedColumns: Array<LogsTableColumn> = [
   {
     title: 'Date',
     isDisabled: true,
     isSelected: true,
     value: (row: LogTableData) => row.timestamp,
-    // sort with an appropriate numeric comparator for big floats
-    sort: (a, b, directionMultiplier) =>
-      (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier,
+    sort: numericComparator,
   },
   {
     title: 'Message',
@@ -325,7 +333,9 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
     setExpandedItems(new Set());
 
-    return tableData;
+    return tableData.sort((a, b) =>
+      numericComparator(a.timestamp, b.timestamp, -1),
+    );
   }, [tableData, visibleColumns, sortBy]);
 
   const onDeleteSeverityFilter = (

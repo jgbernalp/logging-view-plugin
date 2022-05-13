@@ -81,11 +81,12 @@ export const executeQueryRange = ({
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
 
-  const pipeline = ['label_format level=lvl', 'json', severityFilterExpression]
-    .filter(notEmptyString)
-    .join(' | ');
-
-  const queryWithFilters = `${query} | ${pipeline}`;
+  const pipelineArray = ['json', severityFilterExpression].filter(
+    notEmptyString,
+  );
+  const pipeline =
+    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
+  const queryWithFilters = `${query} ${pipeline}`;
 
   const params = {
     query: queryWithFilters,
@@ -112,15 +113,11 @@ export const executeHistogramQuery = ({
 
   // TODO parse query to adjust intervals and clean pipeline
   // TODO remove intentionally skip formatting errors
-  const pipeline = [
-    'label_format level=lvl',
-    'json',
-    severityFilterExpression,
-    '__error__!="JSONParserErr"',
-  ]
-    .filter(notEmptyString)
-    .join(' | ');
-  const histogramQuery = `sum by (level) (count_over_time(${query} | ${pipeline} [${intervalString}]))`;
+  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
+  const pipeline =
+    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
+
+  const histogramQuery = `sum by (level) (count_over_time(${query} ${pipeline} [${intervalString}]))`;
 
   const params = {
     query: histogramQuery,
