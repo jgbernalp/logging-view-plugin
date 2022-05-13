@@ -274,6 +274,7 @@ export const useLogs = ({
 
   const getHistogram = async () => {
     try {
+      // TODO split on multiple/parallel queries for long timespans and concat results
       const { start, end } = timeRangeFromSpan(localTimeSpan);
 
       dispatch({ type: 'histogramRequest' });
