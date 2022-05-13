@@ -49,7 +49,7 @@ const cancellableFetch = <T>(
 
   const fetchPromise = fetch(input, {
     ...init,
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', 'X-Scope-OrgID': 'application' },
     signal: abortController.signal,
   }).then((response) => response.json());
 
@@ -113,7 +113,12 @@ export const executeHistogramQuery = ({
 
   // TODO parse query to adjust intervals and clean pipeline
   // TODO remove intentionally skip formatting errors
-  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
+  const pipelineArray = [
+    'json',
+    severityFilterExpression,
+    '__error__!="JSONParserErr"',
+  ].filter(notEmptyString);
+
   const pipeline =
     pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
 

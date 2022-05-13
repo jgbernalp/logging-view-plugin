@@ -212,7 +212,11 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
             <Split className="co-logs-table__resources" hasGutter>
               {data.resources?.map((resource) => (
                 <SplitItem key={resource.name}>
-                  <ResourceLink kind={resource.kind} name={resource.name} />
+                  <ResourceLink
+                    kind={resource.kind}
+                    name={resource.name}
+                    namespace={data.namespace}
+                  />
                 </SplitItem>
               ))}
             </Split>
@@ -227,6 +231,7 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
               key={resource.name}
               kind={resource.kind}
               name={resource.name}
+              namespace={data.namespace}
             />
           ))}
         </>
