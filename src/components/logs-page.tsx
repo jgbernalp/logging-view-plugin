@@ -174,7 +174,7 @@ const LogsPage: React.FunctionComponent = () => {
     setIsStreaming,
     timeRange,
     interval,
-  } = useLogs({ initialQuery: '{ job =~ ".+" }' });
+  } = useLogs({ initialQuery: '{ kubernetes_host =~ ".+" }' });
 
   const handleToggleStreaming = () => {
     setIsStreaming(!isStreaming);
