@@ -51,7 +51,13 @@ const cancellableFetch = <T>(
     ...init,
     headers: { Accept: 'application/json', 'X-Scope-OrgID': 'application' },
     signal: abortController.signal,
-  }).then((response) => response.json());
+  }).then(async (response) => {
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text);
+    }
+    return response.json();
+  });
 
   const timeout = init?.timeout ?? 30 * 1000;
 
@@ -81,9 +87,7 @@ export const executeQueryRange = ({
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
 
-  const pipelineArray = ['json', severityFilterExpression].filter(
-    notEmptyString,
-  );
+  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
   const pipeline =
     pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
   const queryWithFilters = `${query} ${pipeline}`;
@@ -112,12 +116,7 @@ export const executeHistogramQuery = ({
     severity.size > 0 ? `${getSeverityFilter(severity)}` : '';
 
   // TODO parse query to adjust intervals and clean pipeline
-  // TODO remove intentionally skip formatting errors
-  const pipelineArray = [
-    'json',
-    severityFilterExpression,
-    '__error__!="JSONParserErr"',
-  ].filter(notEmptyString);
+  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
 
   const pipeline =
     pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';

@@ -16,5 +16,18 @@
       "perspective": "admin",
       "section": "observe"
     }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "name": "Logs (CLO)",
+      "href": "logs-clo",
+      "model": {
+        "group": "core",
+        "version": "v1",
+        "kind": "Pod"
+      },
+      "component": { "$codeRef": "LogsDetailPage" }
+    }
   }
 ]

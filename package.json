@@ -50,7 +50,8 @@
     "displayName": "Logging View Plugin",
     "description": "This plugin adds the logs UI to Openshift console",
     "exposedModules": {
-      "LogsPage": "./components/logs-page"
+      "LogsPage": "./pages/logs-page",
+      "LogsDetailPage": "./pages/logs-detail-page"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

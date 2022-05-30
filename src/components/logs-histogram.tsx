@@ -8,7 +8,7 @@ import {
   ChartVoronoiContainer,
   getResizeObserver,
 } from '@patternfly/react-charts';
-import { Alert, Card, CardBody, Flex, FlexItem } from '@patternfly/react-core';
+import { Alert, Card, CardBody } from '@patternfly/react-core';
 import * as React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
@@ -19,6 +19,7 @@ import {
 } from '../logs.types';
 import { getSeverityColor, Severity, severityAbbreviations } from '../severity';
 import { valueWithScalePrefix } from '../value-utils';
+import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
 
 const GRAPH_HEIGHT = 130;
@@ -159,18 +160,6 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
         y2={height - BOTTOM_PADDING}
       />
     </>
-  );
-};
-
-const CenteredContainer: React.FC = ({ children }) => {
-  return (
-    <Flex
-      justifyContent={{ default: 'justifyContentCenter' }}
-      alignContent={{ default: 'alignContentCenter' }}
-      style={{ height: '100%' }}
-    >
-      <FlexItem>{children}</FlexItem>
-    </Flex>
   );
 };
 

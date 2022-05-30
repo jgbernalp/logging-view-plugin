@@ -38,6 +38,7 @@ import {
   StreamLogData,
 } from '../logs.types';
 import { Severity, severityFromString } from '../severity';
+import { CenteredContainer } from './centered-container';
 import { ColumnManagementModal } from './column-management-modal';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
@@ -508,12 +509,14 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               <Tbody>
                 <Tr className="co-logs-table__row-info">
                   <Td colSpan={visibleColumns.length + 2} key="data-empty-row">
-                    <Alert
-                      variant="warning"
-                      isInline
-                      isPlain
-                      title="No datapoints found"
-                    />
+                    <CenteredContainer>
+                      <Alert
+                        variant="warning"
+                        isInline
+                        isPlain
+                        title="No datapoints found"
+                      />
+                    </CenteredContainer>
                   </Td>
                 </Tr>
               </Tbody>

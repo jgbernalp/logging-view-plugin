@@ -14,9 +14,9 @@ import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useLogs } from '../hooks/useLogs';
 import { timeRangeOptions } from '../time-range-options';
-import { LogsHistogram } from './logs-histogram';
-import { LogsQueryInput } from './logs-query-input';
-import { LogsTable } from './logs-table';
+import { LogsHistogram } from '../components/logs-histogram';
+import { LogsQueryInput } from '../components/logs-query-input';
+import { LogsTable } from '../components/logs-table';
 
 const DEFAULT_TIME_RANGE = '1h';
 
