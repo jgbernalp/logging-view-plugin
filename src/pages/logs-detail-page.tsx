@@ -21,11 +21,11 @@ const LogsDetailPage: React.FunctionComponent = () => {
     setQuery,
     severityFilter,
     setSeverityFilter,
-    setIsStreaming,
+    toggleStreaming,
   } = useLogs({ initialQuery: `{ kubernetes_pod_name = "${podname}" }` });
 
   const handleToggleStreaming = () => {
-    setIsStreaming(!isStreaming);
+    toggleStreaming();
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {

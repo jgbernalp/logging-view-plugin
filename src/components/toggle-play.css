@@ -6,6 +6,7 @@
   margin-right: 15px;
   padding: 0;
   width: 32px;
+  cursor: pointer;
 }
 
 .co-logs-toggle-play.pf-c-button.co-toggle-play--active {

@@ -1,3 +1,4 @@
+import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import { QueryRangeResponse } from './logs.types';
 import { Severity, severityAbbreviations } from './severity';
 import { durationFromTimestamp, notEmptyString } from './value-utils';
@@ -49,6 +50,7 @@ const cancellableFetch = <T>(
 
   const fetchPromise = fetch(input, {
     ...init,
+    // TODO: allow org id based on configuration
     headers: { Accept: 'application/json', 'X-Scope-OrgID': 'application' },
     signal: abortController.signal,
   }).then(async (response) => {
@@ -82,7 +84,7 @@ export const executeQueryRange = ({
   start,
   end,
   severity,
-  limit = 200,
+  limit = 100,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
@@ -133,4 +135,34 @@ export const executeHistogramQuery = ({
   return cancellableFetch<QueryRangeResponse>(
     `${LOKI_ENDPOINT}loki/api/v1/query_range?${new URLSearchParams(params)}`,
   );
+};
+
+export const connectToTailSocket = ({
+  query,
+  start,
+  severity,
+  limit = 200,
+}: Omit<QueryRangeParams, 'end'>) => {
+  const severityFilterExpression =
+    severity.size > 0 ? getSeverityFilter(severity) : '';
+
+  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
+  const pipeline =
+    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
+  const queryWithFilters = `${query} ${pipeline}`;
+
+  const params = {
+    query: queryWithFilters,
+    start: String(start * 1000000),
+    limit: String(limit),
+  };
+
+  const url = `${LOKI_ENDPOINT}loki/api/v1/tail?${new URLSearchParams(params)}`;
+
+  return new WSFactory(url, {
+    host: 'auto',
+    path: url,
+    subprotocols: ['json'],
+    jsonParse: true,
+  });
 };

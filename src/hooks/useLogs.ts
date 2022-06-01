@@ -1,3 +1,4 @@
+import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import * as React from 'react';
 import {
   isMatrixResult,
@@ -5,7 +6,11 @@ import {
   QueryRangeResponse,
   TimeRange,
 } from '../logs.types';
-import { executeHistogramQuery, executeQueryRange } from '../loki-client';
+import {
+  connectToTailSocket,
+  executeHistogramQuery,
+  executeQueryRange,
+} from '../loki-client';
 import { Severity } from '../severity';
 import { timeRangeOptions } from '../time-range-options';
 
@@ -22,6 +27,7 @@ type State = {
   logsData?: QueryRangeResponse;
   logsError?: unknown;
   hasMoreLogsData?: boolean;
+  isStreaming: boolean;
 };
 
 type Action =
@@ -43,6 +49,18 @@ type Action =
     }
   | {
       type: 'logsResponse';
+      payload: {
+        logsData: QueryRangeResponse;
+      };
+    }
+  | {
+      type: 'startStreaming';
+    }
+  | {
+      type: 'pauseStreaming';
+    }
+  | {
+      type: 'streamingResponse';
       payload: {
         logsData: QueryRangeResponse;
       };
@@ -85,7 +103,7 @@ const appendData = (
     };
   }
 
-  return response;
+  return response ? response : nextResponse;
 };
 
 const reducer = (state: State, action: Action): State => {
@@ -117,6 +135,27 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: true,
         logsData: undefined,
         logsError: undefined,
+        hasMoreLogsData: false,
+        isStreaming: false,
+      };
+    case 'startStreaming':
+      return {
+        ...state,
+        logsData: undefined,
+        logsError: undefined,
+        hasMoreLogsData: false,
+        isStreaming: true,
+      };
+    case 'pauseStreaming':
+      return {
+        ...state,
+        isStreaming: false,
+        logsError: undefined,
+      };
+    case 'streamingResponse':
+      return {
+        ...state,
+        logsData: appendData(state.logsData, action.payload.logsData),
         hasMoreLogsData: false,
       };
     case 'moreLogsRequest':
@@ -189,9 +228,9 @@ export const useLogs = ({
   initialTimeSpan?: number;
 }) => {
   const [query, setQuery] = React.useState(initialQuery);
-  const [isStreaming, setIsStreaming] = React.useState<boolean>(false);
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
+  const ws = React.useRef<WSFactory | null>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
     new Set<Severity>(),
@@ -207,6 +246,7 @@ export const useLogs = ({
       histogramError,
       logsError,
       hasMoreLogsData,
+      isStreaming,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -215,6 +255,7 @@ export const useLogs = ({
     isLoadingLogsData: false,
     isLoadingMoreLogsData: false,
     hasMoreLogsData: false,
+    isStreaming: false,
   });
 
   const getMoreLogs = async (lastTimestamp: number) => {
@@ -280,6 +321,62 @@ export const useLogs = ({
     }
   };
 
+  const pauseTailLog = () => {
+    if (ws.current) {
+      ws.current.destroy();
+    }
+
+    dispatch({ type: 'pauseStreaming' });
+  };
+
+  const startTailLog = () => {
+    const { start } = timeRangeFromSpan(localTimeSpan);
+
+    if (ws.current) {
+      ws.current.destroy();
+    }
+
+    dispatch({ type: 'startStreaming' });
+
+    ws.current = connectToTailSocket({
+      query,
+      start,
+      severity: severityFilter,
+    });
+
+    ws.current.onerror((error) => {
+      const errorMessage = (error as ErrorEvent).message ?? 'WebSocket error';
+      dispatch({
+        type: 'logsError',
+        payload: { error: errorMessage },
+      });
+    });
+
+    ws.current.onmessage((data) => {
+      dispatch({
+        type: 'streamingResponse',
+        payload: {
+          logsData: {
+            status: 'success',
+            data: {
+              stats: { ingester: {}, store: {}, summary: {} },
+              resultType: 'streams',
+              result: data.streams,
+            },
+          },
+        },
+      });
+    });
+  };
+
+  const toggleStreaming = () => {
+    if (isStreaming) {
+      pauseTailLog();
+    } else {
+      startTailLog();
+    }
+  };
+
   const getHistogram = async () => {
     try {
       // TODO split on multiple/parallel queries for long timespans and concat results
@@ -342,13 +439,13 @@ export const useLogs = ({
     setQuery,
     setSeverityFilter,
     setTimeSpan,
-    setIsStreaming,
     getLogs,
     getMoreLogs,
     hasMoreLogsData,
     logsError,
     getHistogram,
     histogramError,
+    toggleStreaming,
     timeRange: timeRangeFromSpan(timeSpan),
     interval: intervalFromSpan(timeSpan),
   };

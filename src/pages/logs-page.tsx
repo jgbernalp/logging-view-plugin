@@ -12,11 +12,11 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { useLogs } from '../hooks/useLogs';
-import { timeRangeOptions } from '../time-range-options';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
+import { useLogs } from '../hooks/useLogs';
+import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
 
@@ -171,13 +171,13 @@ const LogsPage: React.FunctionComponent = () => {
     severityFilter,
     setSeverityFilter,
     setTimeSpan,
-    setIsStreaming,
     timeRange,
     interval,
+    toggleStreaming,
   } = useLogs({ initialQuery: '{ kubernetes_host =~ ".+" }' });
 
   const handleToggleStreaming = () => {
-    setIsStreaming(!isStreaming);
+    toggleStreaming();
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
@@ -231,6 +231,7 @@ const LogsPage: React.FunctionComponent = () => {
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
           error={logsError}
+          showStreaming
         >
           <LogsQueryInput
             initialValue={query}
