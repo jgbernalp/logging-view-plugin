@@ -52,6 +52,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
           error={logsError}
+          showStreaming
         >
           <LogsQueryInput
             initialValue={query}

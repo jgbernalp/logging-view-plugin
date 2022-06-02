@@ -1,7 +1,6 @@
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Alert,
-  Button,
   Checkbox,
   Select,
   SelectOption,
@@ -16,9 +15,7 @@ import {
   ToolbarFilter,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip,
 } from '@patternfly/react-core';
-import { ColumnsIcon } from '@patternfly/react-icons';
 import {
   ExpandableRowContent,
   ISortBy,
@@ -39,7 +36,6 @@ import {
 } from '../logs.types';
 import { Severity, severityFromString } from '../severity';
 import { CenteredContainer } from './centered-container';
-import { ColumnManagementModal } from './column-management-modal';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { TogglePlay } from './toggle-play';
@@ -154,7 +150,7 @@ const numericComparator = <T extends TableCellValue>(
   directionMultiplier: number,
 ): number => (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier;
 
-const fixedColumns: Array<LogsTableColumn> = [
+const columns: Array<LogsTableColumn> = [
   {
     title: 'Date',
     isDisabled: true,
@@ -167,26 +163,6 @@ const fixedColumns: Array<LogsTableColumn> = [
     isDisabled: true,
     isSelected: true,
     value: (row: LogTableData) => row.message,
-  },
-];
-
-const defaultAdditionalColumns: Array<LogsTableColumn> = [
-  {
-    title: 'Resources',
-    isDisabled: false,
-    isSelected: false,
-    value: (row: LogTableData) =>
-      row.resources.map((resource) => resource.name).join('_'),
-    sort: (a, b, directionMultiplier) =>
-      a.toString().localeCompare(b.toString()) * directionMultiplier,
-  },
-  {
-    title: 'Namespace',
-    isDisabled: false,
-    isSelected: false,
-    value: (row: LogTableData) => row.namespace,
-    sort: (a, b, directionMultiplier) =>
-      a.toString().localeCompare(b.toString()) * directionMultiplier,
   },
 ];
 
@@ -276,16 +252,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     new Set(),
   );
   const [showResources, setShowResources] = React.useState(false);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<ISortBy>({
     index: 0,
     direction: 'desc',
   });
-  const [additionalColumns, setAdditionalColumns] = React.useState(
-    defaultAdditionalColumns,
-  );
-
   const tableData = React.useMemo(
     () => aggregateStreamLogData(logsData),
     [logsData],
@@ -300,24 +271,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     }
   };
 
-  const handleModalToggle = () => {
-    setIsModalOpen(!isModalOpen);
-  };
-
-  const handleColumnsSelected = (columns: Array<LogsTableColumn>) => {
-    setIsModalOpen(false);
-    setSortBy({ index: 0, direction: 'desc' });
-    setAdditionalColumns(columns);
-  };
-
-  const visibleColumns = React.useMemo(
-    () =>
-      fixedColumns.concat(
-        additionalColumns.filter((column) => column.isSelected),
-      ),
-    [additionalColumns],
-  );
-
   const getSortParams = (columnIndex: number): ThProps['sort'] => ({
     sortBy,
     onSort: (_event, index, direction) => {
@@ -328,8 +281,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   });
 
   const sortedData = React.useMemo(() => {
-    if (sortBy.index !== undefined && visibleColumns[sortBy.index]) {
-      const { sort, value } = visibleColumns[sortBy.index];
+    if (sortBy.index !== undefined && columns[sortBy.index]) {
+      const { sort, value } = columns[sortBy.index];
       if (sort) {
         return tableData.sort((a, b) =>
           sort(value(a), value(b), sortBy.direction === 'asc' ? 1 : -1),
@@ -342,7 +295,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     return tableData.sort((a, b) =>
       numericComparator(a.timestamp, b.timestamp, -1),
     );
-  }, [tableData, visibleColumns, sortBy]);
+  }, [tableData, columns, sortBy]);
 
   const onDeleteSeverityFilter = (
     _category: string | ToolbarChipGroup,
@@ -384,12 +337,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
   return (
     <>
-      <ColumnManagementModal
-        columns={fixedColumns.concat(additionalColumns)}
-        isModalOpen={isModalOpen}
-        onModalToggle={handleModalToggle}
-        onColumnsSelected={handleColumnsSelected}
-      />
       <div>
         <Toolbar isSticky clearAllFilters={onDeleteSeverityGroup}>
           <ToolbarContent>
@@ -422,17 +369,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
             <ToolbarGroup variant="icon-button-group">
               <ToolbarItem>
-                <Tooltip content="Manage columns">
-                  <Button
-                    variant="plain"
-                    aria-label="edit"
-                    onClick={handleModalToggle}
-                  >
-                    <ColumnsIcon />
-                  </Button>
-                </Tooltip>
-              </ToolbarItem>
-              <ToolbarItem>
                 <Checkbox
                   label="Show Resources"
                   isChecked={showResources}
@@ -462,7 +398,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Tr>
               <Th></Th>
               <Th></Th>
-              {visibleColumns.map((column, index) => (
+              {columns.map((column, index) => (
                 <Th
                   sort={column.sort ? getSortParams(index) : undefined}
                   key={column.title}
@@ -476,7 +412,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           {error ? (
             <Tbody>
               <Tr className="co-logs-table__row-info">
-                <Td colSpan={visibleColumns.length + 2} key="error-row">
+                <Td colSpan={columns.length + 2} key="error-row">
                   <div className="co-logs-table__row-error">
                     <Alert
                       variant="danger"
@@ -491,7 +427,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           ) : isStreaming ? (
             <Tbody>
               <Tr className="co-logs-table__row-info co-logs-table__row-streaming">
-                <Td colSpan={visibleColumns.length + 2} key="streaming-row">
+                <Td colSpan={columns.length + 2} key="streaming-row">
                   Streaming Logs...
                 </Td>
               </Tr>
@@ -499,7 +435,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           ) : isLoading ? (
             <Tbody>
               <Tr className="co-logs-table__row-info">
-                <Td colSpan={visibleColumns.length + 2} key="loading-row">
+                <Td colSpan={columns.length + 2} key="loading-row">
                   Loading...
                 </Td>
               </Tr>
@@ -508,7 +444,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             dataIsEmpty && (
               <Tbody>
                 <Tr className="co-logs-table__row-info">
-                  <Td colSpan={visibleColumns.length + 2} key="data-empty-row">
+                  <Td colSpan={columns.length + 2} key="data-empty-row">
                     <CenteredContainer>
                       <Alert
                         variant="warning"
@@ -539,7 +475,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                     expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
                   />
 
-                  {visibleColumns.map((column, index) => {
+                  {columns.map((column, index) => {
                     const content = (
                       <LogRow
                         data={value}
@@ -566,7 +502,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                   isExpanded={true}
                   key={`${value.timestamp}-${rowIndex}-child`}
                 >
-                  <Td colSpan={visibleColumns.length + 2}>
+                  <Td colSpan={columns.length + 2}>
                     <ExpandableRowContent>
                       <LogDetail data={value.data} />
                     </ExpandableRowContent>
@@ -591,7 +527,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                 className="co-logs-table__row-info co-logs-table__row-more-data"
                 onClick={handleLoadMore}
               >
-                <Td colSpan={visibleColumns.length + 2} key="more-data-row">
+                <Td colSpan={columns.length + 2} key="more-data-row">
                   More data available,{' '}
                   {isLoadingMore ? 'loading...' : 'click to load'}
                 </Td>
