@@ -20,8 +20,8 @@
   {
     "type": "console.page/resource/tab",
     "properties": {
-      "name": "Logs (CLO)",
-      "href": "logs-clo",
+      "name": "Aggregated Logs",
+      "href": "aggregated-logs",
       "model": {
         "group": "core",
         "version": "v1",

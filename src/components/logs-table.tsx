@@ -426,9 +426,16 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             </Tbody>
           ) : isStreaming ? (
             <Tbody>
-              <Tr className="co-logs-table__row-info co-logs-table__row-streaming">
+              <Tr className="co-logs-table__row-info">
                 <Td colSpan={columns.length + 2} key="streaming-row">
-                  Streaming Logs...
+                  <div className="co-logs-table__row-streaming">
+                    <Alert
+                      variant="info"
+                      isInline
+                      isPlain
+                      title="Streaming Logs..."
+                    />
+                  </div>
                 </Td>
               </Tr>
             </Tbody>

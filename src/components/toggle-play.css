@@ -9,6 +9,6 @@
   cursor: pointer;
 }
 
-.co-logs-toggle-play.pf-c-button.co-toggle-play--active {
+.co-logs-toggle-play.pf-c-button.co-logs-toggle-play--active {
   border-color: var(--pf-global--palette--green-300)
 }

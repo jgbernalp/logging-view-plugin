@@ -9,6 +9,7 @@ interface TogglePlayProps {
 }
 
 export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active }) => {
+  console.log({ active });
   return (
     <Button
       variant="plain"
