@@ -5,7 +5,7 @@ import {
   DescriptionListTerm,
 } from '@patternfly/react-core';
 import * as React from 'react';
-import './logs-detail.css';
+import './log-detail.css';
 
 interface LogDetailProps {
   data: Record<string, string>;
@@ -19,6 +19,7 @@ export const LogDetail: React.FC<LogDetailProps> = ({ data }) => (
     columnModifier={{
       default: '2Col',
     }}
+    className="co-logs-detail_descripton-list"
   >
     {Object.keys(data)
       .filter((key) => key !== '_')
