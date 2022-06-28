@@ -15,7 +15,8 @@ import { Severity } from '../severity';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
-const DEFAULT_LOGS_LIMIT = 200;
+const QUERY_LOGS_LIMIT = 200;
+const STREAMING_MAX_LOGS_LIMIT = 1e3;
 
 type State = {
   timeSpan: number;
@@ -87,6 +88,7 @@ type Action =
 const appendData = (
   response?: QueryRangeResponse,
   nextResponse?: QueryRangeResponse,
+  limit?: number,
 ): QueryRangeResponse => {
   if (
     response &&
@@ -94,11 +96,14 @@ const appendData = (
     ((isMatrixResult(response.data) && isMatrixResult(nextResponse.data)) ||
       (isStreamsResult(response.data) && isStreamsResult(nextResponse.data)))
   ) {
+    const result = [...response.data.result, ...nextResponse.data.result];
+    const limitedTailResult = limit ? result.slice(-limit) : result;
+
     return {
       ...response,
       data: {
         ...response.data,
-        result: [...response.data.result, ...nextResponse.data.result],
+        result: limitedTailResult,
       } as QueryRangeResponse['data'],
     };
   }
@@ -155,7 +160,11 @@ const reducer = (state: State, action: Action): State => {
     case 'streamingResponse':
       return {
         ...state,
-        logsData: appendData(state.logsData, action.payload.logsData),
+        logsData: appendData(
+          state.logsData,
+          action.payload.logsData,
+          STREAMING_MAX_LOGS_LIMIT,
+        ),
         hasMoreLogsData: false,
       };
     case 'moreLogsRequest':
@@ -172,7 +181,7 @@ const reducer = (state: State, action: Action): State => {
         hasMoreLogsData:
           action.payload.logsData.data.result
             .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= DEFAULT_LOGS_LIMIT,
+            .reduce((sum, count) => sum + count, 0) >= QUERY_LOGS_LIMIT,
       };
     case 'moreLogsResponse':
       return {
@@ -182,7 +191,7 @@ const reducer = (state: State, action: Action): State => {
         hasMoreLogsData:
           action.payload.logsData.data.result
             .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= DEFAULT_LOGS_LIMIT,
+            .reduce((sum, count) => sum + count, 0) >= QUERY_LOGS_LIMIT,
       };
     case 'logsError':
       return {
@@ -269,7 +278,7 @@ export const useLogs = ({
         start,
         end: lastTimestamp,
         severity: severityFilter,
-        limit: DEFAULT_LOGS_LIMIT,
+        limit: QUERY_LOGS_LIMIT,
       });
 
       logsAbort.current = abort;
@@ -302,7 +311,7 @@ export const useLogs = ({
         start,
         end,
         severity: severityFilter,
-        limit: DEFAULT_LOGS_LIMIT,
+        limit: QUERY_LOGS_LIMIT,
       });
 
       logsAbort.current = abort;
