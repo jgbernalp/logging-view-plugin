@@ -8,18 +8,15 @@ interface TogglePlayProps {
   active?: boolean;
 }
 
-export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active }) => {
-  console.log({ active });
-  return (
-    <Button
-      variant="plain"
-      className={`co-logs-toggle-play ${
-        active ? 'co-logs-toggle-play--active' : ''
-      }`}
-      onClick={onClick}
-      aria-label={active ? 'Pause streaming' : 'Start streaming'}
-    >
-      {active ? <PauseIcon size="sm" /> : <PlayIcon size="sm" />}
-    </Button>
-  );
-};
+export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active }) => (
+  <Button
+    variant="plain"
+    className={`co-logs-toggle-play ${
+      active ? 'co-logs-toggle-play--active' : ''
+    }`}
+    onClick={onClick}
+    aria-label={active ? 'Pause streaming' : 'Start streaming'}
+  >
+    {active ? <PauseIcon size="sm" /> : <PlayIcon size="sm" />}
+  </Button>
+);
