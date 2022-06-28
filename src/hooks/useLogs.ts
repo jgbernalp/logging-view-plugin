@@ -170,11 +170,9 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: false,
         logsData: action.payload.logsData,
         hasMoreLogsData:
-          Math.max(
-            ...action.payload.logsData.data.result.map(
-              (result) => result.values.length,
-            ),
-          ) >= DEFAULT_LOGS_LIMIT,
+          action.payload.logsData.data.result
+            .map((result) => result.values.length)
+            .reduce((sum, count) => sum + count, 0) >= DEFAULT_LOGS_LIMIT,
       };
     case 'moreLogsResponse':
       return {
@@ -182,11 +180,9 @@ const reducer = (state: State, action: Action): State => {
         isLoadingMoreLogsData: false,
         logsData: appendData(state.logsData, action.payload.logsData),
         hasMoreLogsData:
-          Math.max(
-            ...action.payload.logsData.data.result.map(
-              (result) => result.values.length,
-            ),
-          ) >= DEFAULT_LOGS_LIMIT,
+          action.payload.logsData.data.result
+            .map((result) => result.values.length)
+            .reduce((sum, count) => sum + count, 0) >= DEFAULT_LOGS_LIMIT,
       };
     case 'logsError':
       return {
