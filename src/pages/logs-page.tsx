@@ -12,11 +12,13 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { useQueryParams } from '../hooks/useQueryParams';
+import { useHistory, useLocation } from 'react-router';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
 import { useLogs } from '../hooks/useLogs';
+import { useQueryParams } from '../hooks/useQueryParams';
+import { isSeverity, Severity } from '../severity';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
@@ -154,11 +156,32 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 };
 
 const QUERY_PARAM_KEY = 'q';
+const SEVERITY_FILTER_PARAM_KEY = 'severity';
+const DEFAULT_QUERY = '{ kubernetes_host =~ ".+" }';
+
+const severityFiltersFromParams = (params: string | null): Set<Severity> => {
+  const severityFilters: Array<Severity> =
+    params
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(isSeverity) ?? [];
+
+  return severityFilters.length > 0 ? new Set(severityFilters) : new Set();
+};
 
 const LogsPage: React.FunctionComponent = () => {
   const queryParams = useQueryParams();
+  const history = useHistory();
+  const location = useLocation();
+
+  const initialQuery = queryParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
+  const initialSeverity = severityFiltersFromParams(
+    queryParams.get(SEVERITY_FILTER_PARAM_KEY),
+  );
+  const [query, setQuery] = React.useState(initialQuery);
+  const [severityFilter, setSeverityFilter] = React.useState(initialSeverity);
+
   const {
-    query,
     histogramData,
     histogramError,
     isLoadingLogsData,
@@ -171,33 +194,69 @@ const LogsPage: React.FunctionComponent = () => {
     getMoreLogs,
     hasMoreLogsData,
     getHistogram,
-    setQuery,
-    severityFilter,
-    setSeverityFilter,
     setTimeSpan,
     timeRange,
     interval,
     toggleStreaming,
-  } = useLogs({
-    initialQuery: queryParams.has(QUERY_PARAM_KEY)
-      ? queryParams.get(QUERY_PARAM_KEY)
-      : '{ kubernetes_host =~ ".+" }',
-  });
+  } = useLogs();
 
   const handleToggleStreaming = () => {
-    toggleStreaming();
+    toggleStreaming({ query, severityFilter });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs(lastTimestamp);
+      getMoreLogs({ lastTimestamp, query, severityFilter });
     }
   };
 
-  const runQuery = () => {
-    getLogs();
-    getHistogram();
+  const setQueryInURL = () => {
+    queryParams.set(QUERY_PARAM_KEY, query);
+    history.push(`${location.pathname}?${queryParams.toString()}`);
   };
+
+  const setSeverityInURL = () => {
+    queryParams.set(
+      SEVERITY_FILTER_PARAM_KEY,
+      Array.from(severityFilter).join(','),
+    );
+    history.push(`${location.pathname}?${queryParams.toString()}`);
+  };
+
+  const runQuery = (
+    queryToRun?: string,
+    severityToConsider?: Set<Severity>,
+  ) => {
+    getLogs({
+      query: queryToRun ?? query,
+      severityFilter: severityToConsider ?? severityFilter,
+    });
+    getHistogram({
+      query: queryToRun ?? query,
+      severityFilter: severityToConsider ?? severityFilter,
+    });
+  };
+
+  const handleRefreshClick = () => {
+    runQuery();
+  };
+
+  React.useEffect(() => {
+    return history.listen((location) => {
+      const urlParams = new URLSearchParams(location.search);
+      const newQuery = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
+      const newSeverityFilter = severityFiltersFromParams(
+        urlParams.get(SEVERITY_FILTER_PARAM_KEY),
+      );
+      setQuery(newQuery);
+      setSeverityFilter(newSeverityFilter);
+      runQuery(newQuery, newSeverityFilter);
+    });
+  }, [history]);
+
+  React.useEffect(() => {
+    runQuery();
+  }, []);
 
   return (
     <PageSection>
@@ -213,7 +272,11 @@ const LogsPage: React.FunctionComponent = () => {
             />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
-              <Button onClick={runQuery} aria-label="Refresh" variant="primary">
+              <Button
+                onClick={handleRefreshClick}
+                aria-label="Refresh"
+                variant="primary"
+              >
                 <SyncAltIcon />
               </Button>
             </Tooltip>
@@ -233,7 +296,7 @@ const LogsPage: React.FunctionComponent = () => {
           isStreaming={isStreaming}
           severityFilter={severityFilter}
           onStreamingToggle={handleToggleStreaming}
-          onSeverityChange={setSeverityFilter}
+          onSeverityChange={setSeverityInURL}
           onLoadMore={handleLoadMoreData}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
@@ -242,8 +305,8 @@ const LogsPage: React.FunctionComponent = () => {
           showStreaming
         >
           <LogsQueryInput
-            initialValue={query}
-            onRun={runQuery}
+            value={query}
+            onRun={setQueryInURL}
             onChange={setQuery}
           />
         </LogsTable>

@@ -7,7 +7,7 @@
   margin-right: var(--pf-global--spacer--md);
 }
 
-.co-logs-expression-input__searchInput .pf-c-search-input__text-input{
+.co-logs-expression-input__searchInput .pf-c-text-input-group__text-input{
   font-family: var(--pf-c-code-block__pre--FontFamily), monospace;
   font-size: var(--pf-c-code-block__pre--FontSize);
 }

@@ -1,15 +1,20 @@
 import { Grid, PageSection } from '@patternfly/react-core';
 import * as React from 'react';
 import { useParams } from 'react-router';
+import { Severity } from 'src/severity';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
 import { useLogs } from '../hooks/useLogs';
 
 const LogsDetailPage: React.FunctionComponent = () => {
   const { name: podname } = useParams<{ name: string }>();
+  const initialQuery = `{ kubernetes_pod_name = "${podname}" }`;
+  const [query, setQuery] = React.useState(initialQuery);
+  const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
+    new Set(),
+  );
 
   const {
-    query,
     isLoadingLogsData,
     isLoadingMoreLogsData,
     isStreaming,
@@ -18,25 +23,26 @@ const LogsDetailPage: React.FunctionComponent = () => {
     getLogs,
     getMoreLogs,
     hasMoreLogsData,
-    setQuery,
-    severityFilter,
-    setSeverityFilter,
     toggleStreaming,
-  } = useLogs({ initialQuery: `{ kubernetes_pod_name = "${podname}" }` });
+  } = useLogs();
 
   const handleToggleStreaming = () => {
-    toggleStreaming();
+    toggleStreaming({ query, severityFilter });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs(lastTimestamp);
+      getMoreLogs({ lastTimestamp, query, severityFilter });
     }
   };
 
   const runQuery = () => {
-    getLogs();
+    getLogs({ query, severityFilter });
   };
+
+  React.useEffect(() => {
+    runQuery();
+  }, []);
 
   return (
     <PageSection>
@@ -54,11 +60,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
           error={logsError}
           showStreaming
         >
-          <LogsQueryInput
-            initialValue={query}
-            onRun={runQuery}
-            onChange={setQuery}
-          />
+          <LogsQueryInput value={query} onRun={runQuery} onChange={setQuery} />
         </LogsTable>
       </Grid>
     </PageSection>

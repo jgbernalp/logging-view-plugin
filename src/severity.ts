@@ -37,6 +37,9 @@ export const severityFromString = (
   return 'unknown';
 };
 
+export const isSeverity = (value: string): value is Severity =>
+  Object.keys(severityAbbreviations).includes(value);
+
 export const getSeverityColor = (severity: Severity): string => {
   switch (severity) {
     case 'critical':

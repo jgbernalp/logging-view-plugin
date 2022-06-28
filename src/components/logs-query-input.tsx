@@ -1,25 +1,27 @@
 import { Button, SearchInput } from '@patternfly/react-core';
 import * as React from 'react';
-import { useDebounce } from '../hooks/useDebounce';
 import './logs-query-input.css';
 
 interface LogsQueryInputProps {
-  initialValue?: string;
+  value?: string;
   onChange?: (expression: string | undefined) => void;
   onRun?: (expression: string | undefined) => void;
 }
 
 export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
-  initialValue,
+  value,
   onChange,
   onRun,
 }) => {
-  const [searchValue, setSearchValue] = React.useState(initialValue);
-  const debounceValue = useDebounce(searchValue);
+  const [searchValue, setSearchValue] = React.useState(value);
 
   React.useEffect(() => {
-    onChange?.(debounceValue);
-  }, [debounceValue]);
+    onChange?.(searchValue);
+  }, [searchValue]);
+
+  React.useEffect(() => {
+    setSearchValue(value);
+  }, [value]);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);

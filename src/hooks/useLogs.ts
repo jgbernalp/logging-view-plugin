@@ -225,21 +225,20 @@ const defaultTimeSpan = (): number => {
   return defaultSpan;
 };
 
-export const useLogs = ({
-  initialQuery,
-  initialTimeSpan = defaultTimeSpan(),
-}: {
-  initialQuery: string;
-  initialTimeSpan?: number;
-}) => {
-  const [query, setQuery] = React.useState(initialQuery);
+type UseLogOptions = { initialTimeSpan?: number } | undefined;
+
+export const useLogs = (
+  { initialTimeSpan = defaultTimeSpan() }: UseLogOptions = {
+    initialTimeSpan: defaultTimeSpan(),
+  },
+) => {
+  const currentQuery = React.useRef<string | undefined>();
+  const currentSeverityFilter = React.useRef<Set<Severity> | undefined>();
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
-  const ws = React.useRef<WSFactory | null>();
   const histogramAbort = React.useRef<() => void | undefined>();
-  const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
-    new Set<Severity>(),
-  );
+  const ws = React.useRef<WSFactory | null>();
+
   const [
     {
       logsData,
@@ -263,8 +262,19 @@ export const useLogs = ({
     isStreaming: false,
   });
 
-  const getMoreLogs = async (lastTimestamp: number) => {
+  const getMoreLogs = async ({
+    lastTimestamp,
+    query,
+    severityFilter,
+  }: {
+    lastTimestamp: number;
+    query: string;
+    severityFilter: Set<Severity>;
+  }) => {
     try {
+      currentQuery.current = query;
+      currentSeverityFilter.current = severityFilter;
+
       const { start } = timeRangeFromSpan(localTimeSpan);
 
       dispatch({ type: 'moreLogsRequest' });
@@ -296,8 +306,17 @@ export const useLogs = ({
     }
   };
 
-  const getLogs = async () => {
+  const getLogs = async ({
+    query,
+    severityFilter,
+  }: {
+    query: string;
+    severityFilter: Set<Severity>;
+  }) => {
     try {
+      currentQuery.current = query;
+      currentSeverityFilter.current = severityFilter;
+
       const { start, end } = timeRangeFromSpan(localTimeSpan);
 
       dispatch({ type: 'logsRequest' });
@@ -334,7 +353,16 @@ export const useLogs = ({
     dispatch({ type: 'pauseStreaming' });
   };
 
-  const startTailLog = () => {
+  const startTailLog = ({
+    query,
+    severityFilter,
+  }: {
+    query: string;
+    severityFilter: Set<Severity>;
+  }) => {
+    currentQuery.current = query;
+    currentSeverityFilter.current = severityFilter;
+
     const { start } = timeRangeFromSpan(localTimeSpan);
 
     if (ws.current) {
@@ -374,16 +402,34 @@ export const useLogs = ({
     });
   };
 
-  const toggleStreaming = () => {
+  const toggleStreaming = ({
+    query,
+    severityFilter,
+  }: {
+    query: string;
+    severityFilter: Set<Severity>;
+  }) => {
+    currentQuery.current = query;
+    currentSeverityFilter.current = severityFilter;
+
     if (isStreaming) {
       pauseTailLog();
     } else {
-      startTailLog();
+      startTailLog({ query, severityFilter });
     }
   };
 
-  const getHistogram = async () => {
+  const getHistogram = async ({
+    query,
+    severityFilter,
+  }: {
+    query: string;
+    severityFilter: Set<Severity>;
+  }) => {
     try {
+      currentQuery.current = query;
+      currentSeverityFilter.current = severityFilter;
+
       // TODO split on multiple/parallel queries for long timespans and concat results
       const { start, end } = timeRangeFromSpan(localTimeSpan);
 
@@ -417,8 +463,16 @@ export const useLogs = ({
   };
 
   React.useEffect(() => {
-    getLogs();
-    getHistogram();
+    if (currentQuery && currentSeverityFilter) {
+      getLogs({
+        query: currentQuery.current,
+        severityFilter: currentSeverityFilter.current,
+      });
+      getHistogram({
+        query: currentQuery.current,
+        severityFilter: currentSeverityFilter.current,
+      });
+    }
 
     return () => {
       if (histogramAbort.current) {
@@ -429,11 +483,9 @@ export const useLogs = ({
         logsAbort.current();
       }
     };
-  }, [severityFilter, localTimeSpan]);
+  }, [localTimeSpan]);
 
   return {
-    query,
-    severityFilter,
     logsData,
     isLoadingLogsData,
     isLoadingMoreLogsData,
@@ -441,8 +493,6 @@ export const useLogs = ({
     histogramData,
     isLoadingHistogramData,
     timeSpan,
-    setQuery,
-    setSeverityFilter,
     setTimeSpan,
     getLogs,
     getMoreLogs,
