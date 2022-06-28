@@ -12,6 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
+import { useQueryParams } from '../hooks/useQueryParams';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
@@ -152,7 +153,10 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   );
 };
 
+const QUERY_PARAM_KEY = 'q';
+
 const LogsPage: React.FunctionComponent = () => {
+  const queryParams = useQueryParams();
   const {
     query,
     histogramData,
@@ -174,7 +178,11 @@ const LogsPage: React.FunctionComponent = () => {
     timeRange,
     interval,
     toggleStreaming,
-  } = useLogs({ initialQuery: '{ kubernetes_host =~ ".+" }' });
+  } = useLogs({
+    initialQuery: queryParams.has(QUERY_PARAM_KEY)
+      ? queryParams.get(QUERY_PARAM_KEY)
+      : '{ kubernetes_host =~ ".+" }',
+  });
 
   const handleToggleStreaming = () => {
     toggleStreaming();
