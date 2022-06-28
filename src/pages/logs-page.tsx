@@ -215,11 +215,15 @@ const LogsPage: React.FunctionComponent = () => {
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  const setSeverityInURL = () => {
-    queryParams.set(
-      SEVERITY_FILTER_PARAM_KEY,
-      Array.from(severityFilter).join(','),
-    );
+  const setSeverityInURL = (newSeverityFilter: Set<Severity>) => {
+    if (newSeverityFilter.size === 0) {
+      queryParams.delete(SEVERITY_FILTER_PARAM_KEY);
+    } else {
+      queryParams.set(
+        SEVERITY_FILTER_PARAM_KEY,
+        Array.from(newSeverityFilter).join(','),
+      );
+    }
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
