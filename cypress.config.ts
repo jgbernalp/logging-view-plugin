@@ -4,4 +4,5 @@ export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:9003',
   },
+  video: false,
 });

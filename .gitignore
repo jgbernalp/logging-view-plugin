@@ -3,3 +3,4 @@ dist/
 dist-standalone/
 scripts/env.list
 cypress/videos/
+cypress/screenshots/
