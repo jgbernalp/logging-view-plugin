@@ -1,5 +1,6 @@
 import { Button, SearchInput } from '@patternfly/react-core';
 import * as React from 'react';
+import { TestIds } from '../test-ids';
 import './logs-query-input.css';
 
 interface LogsQueryInputProps {
@@ -42,7 +43,10 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   };
 
   return (
-    <div className="co-logs-expression-input">
+    <div
+      className="co-logs-expression-input"
+      data-test={TestIds.LogsQueryInput}
+    >
       <SearchInput
         className="co-logs-expression-input__searchInput"
         placeholder="LogQL Query"
@@ -52,7 +56,11 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
         onKeyDown={handleKeyDown}
       />
       {onRun && (
-        <Button variant="primary" onClick={handleRunQuery}>
+        <Button
+          variant="primary"
+          data-test={TestIds.ExecuteQueryButton}
+          onClick={handleRunQuery}
+        >
           Run Query
         </Button>
       )}

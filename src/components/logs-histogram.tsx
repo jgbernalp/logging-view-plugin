@@ -10,6 +10,7 @@ import {
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import * as React from 'react';
+import { TestIds } from '../test-ids';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isMatrixResult,
@@ -231,7 +232,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   const dataIsEmpty = histogramData?.data.result.length === 0;
 
   return (
-    <Card>
+    <Card data-test={TestIds.LogsHistogram}>
       <CardBody>
         <div ref={containerRef} style={{ height: GRAPH_HEIGHT }}>
           {error ? (

@@ -13,6 +13,7 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useHistory, useLocation } from 'react-router';
+import { TestIds } from '../test-ids';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
@@ -84,7 +85,10 @@ const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = ({
   };
 
   return (
-    <FormGroup fieldId="logs-refresh-interval">
+    <FormGroup
+      fieldId="logs-refresh-interval"
+      data-test={TestIds.RefreshIntervalDropdown}
+    >
       <Dropdown
         dropdownItems={refreshIntervalOptions.map(({ key, name }, index) => (
           <DropdownItem
@@ -133,7 +137,7 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   };
 
   return (
-    <FormGroup fieldId="logs-time-range">
+    <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
       <Dropdown
         dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
           <DropdownItem
@@ -280,6 +284,7 @@ const LogsPage: React.FunctionComponent = () => {
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
                 variant="primary"
+                data-test={TestIds.SyncButton}
               >
                 <SyncAltIcon />
               </Button>

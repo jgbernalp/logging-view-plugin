@@ -8,10 +8,13 @@
     "build": "yarn clean && NODE_ENV=production yarn ts-node node_modules/.bin/webpack",
     "build-dev": "yarn clean && yarn ts-node node_modules/.bin/webpack",
     "dev": "yarn ts-node node_modules/.bin/webpack serve",
+    "standalone:dev": "yarn ts-node node_modules/.bin/webpack serve --config webpack.standalone.config.ts",
     "start-console": "./scripts/start-console.sh -e",
     "i18n": "i18next \"src/**/*.{js,jsx,ts,tsx}\" [-oc] -c i18next-parser.config.js",
     "ts-node": "ts-node -O '{\"module\":\"commonjs\"}'",
-    "lint": "eslint ./src --fix"
+    "lint": "eslint ./src --fix",
+    "cypress:open": "yarn cypress open",
+    "cypress:run": "yarn cypress run"
   },
   "devDependencies": {
     "@openshift-console/dynamic-plugin-sdk": "^0.0.8",
@@ -19,19 +22,22 @@
     "@patternfly/react-core": "4.175.4",
     "@types/node": "^17.0.21",
     "@types/react": "^17.0.37",
+    "@types/react-dom": "17.0.17",
     "@types/react-helmet": "^6.1.4",
     "@types/react-router-dom": "^5.3.2",
     "@types/webpack-dev-server": "^4.7.2",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
     "css-loader": "^6.7.1",
+    "cypress": "^10.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.4",
+    "html-webpack-plugin": "^5.5.0",
     "prettier": "^2.6.0",
-    "react": "17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "react-helmet": "^6.1.0",
     "react-i18next": "^11.8.11",
     "react-router": "5.2.0",
@@ -58,6 +64,7 @@
     }
   },
   "dependencies": {
+    "@patternfly/patternfly": "^4.202.1",
     "@patternfly/react-charts": "^6.55.16",
     "@patternfly/react-icons": "^4.57.2",
     "@patternfly/react-table": "^4.71.16"

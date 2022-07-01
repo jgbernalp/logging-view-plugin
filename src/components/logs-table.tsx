@@ -28,6 +28,7 @@ import {
   Tr,
 } from '@patternfly/react-table';
 import * as React from 'react';
+import { TestIds } from '../test-ids';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isStreamsResult,
@@ -336,213 +337,211 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   };
 
   return (
-    <>
-      <div>
-        <Toolbar isSticky clearAllFilters={onDeleteSeverityGroup}>
-          <ToolbarContent>
-            <ToolbarGroup alignment={{ default: 'alignLeft' }}>
-              <ToolbarItem>{children}</ToolbarItem>
-            </ToolbarGroup>
+    <div data-test={TestIds.LogsTable}>
+      <Toolbar isSticky clearAllFilters={onDeleteSeverityGroup}>
+        <ToolbarContent>
+          <ToolbarGroup alignment={{ default: 'alignLeft' }}>
+            <ToolbarItem>{children}</ToolbarItem>
+          </ToolbarGroup>
 
-            <ToolbarGroup variant="filter-group">
-              <ToolbarFilter
-                chips={Array.from(severityFilter)}
-                deleteChip={onDeleteSeverityFilter}
-                deleteChipGroup={onDeleteSeverityGroup}
-                categoryName="Severity"
+          <ToolbarGroup variant="filter-group">
+            <ToolbarFilter
+              chips={Array.from(severityFilter)}
+              deleteChip={onDeleteSeverityFilter}
+              deleteChipGroup={onDeleteSeverityGroup}
+              categoryName="Severity"
+            >
+              <Select
+                variant={SelectVariant.checkbox}
+                aria-label="Severity"
+                onToggle={onSeverityToggle}
+                onSelect={onSeveritySelect}
+                selections={Array.from(severityFilter)}
+                isOpen={isSeverityExpanded}
+                placeholderText="Severity"
               >
-                <Select
-                  variant={SelectVariant.checkbox}
-                  aria-label="Severity"
-                  onToggle={onSeverityToggle}
-                  onSelect={onSeveritySelect}
-                  selections={Array.from(severityFilter)}
-                  isOpen={isSeverityExpanded}
-                  placeholderText="Severity"
-                >
-                  {availableSeverityFilters.map((severity) => (
-                    <SelectOption key={severity} value={severity} />
-                  ))}
-                </Select>
-              </ToolbarFilter>
+                {availableSeverityFilters.map((severity) => (
+                  <SelectOption key={severity} value={severity} />
+                ))}
+              </Select>
+            </ToolbarFilter>
+          </ToolbarGroup>
+
+          <ToolbarGroup variant="icon-button-group">
+            <ToolbarItem>
+              <Checkbox
+                label="Show Resources"
+                isChecked={showResources}
+                onChange={setShowResources}
+                aria-label="checkbox for showing resources names"
+                id="showResourcesCheckbox"
+              />
+            </ToolbarItem>
+          </ToolbarGroup>
+
+          {showStreaming && (
+            <ToolbarGroup alignment={{ default: 'alignRight' }}>
+              <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
             </ToolbarGroup>
-
-            <ToolbarGroup variant="icon-button-group">
-              <ToolbarItem>
-                <Checkbox
-                  label="Show Resources"
-                  isChecked={showResources}
-                  onChange={setShowResources}
-                  aria-label="checkbox for showing resources names"
-                  id="showResourcesCheckbox"
-                />
-              </ToolbarItem>
-            </ToolbarGroup>
-
-            {showStreaming && (
-              <ToolbarGroup alignment={{ default: 'alignRight' }}>
-                <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
-              </ToolbarGroup>
-            )}
-          </ToolbarContent>
-        </Toolbar>
-
-        <TableComposable
-          aria-label="Logs Table"
-          variant="compact"
-          className="co-logs-table"
-          isStriped
-          isExpandable
-        >
-          <Thead>
-            <Tr>
-              <Th></Th>
-              <Th></Th>
-              {columns.map((column, index) => (
-                <Th
-                  sort={column.sort ? getSortParams(index) : undefined}
-                  key={column.title}
-                >
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
-
-          {error ? (
-            <Tbody>
-              <Tr className="co-logs-table__row-info">
-                <Td colSpan={columns.length + 2} key="error-row">
-                  <div className="co-logs-table__row-error">
-                    <Alert
-                      variant="danger"
-                      isInline
-                      isPlain
-                      title={(error as Error).message || String(error)}
-                    />
-                  </div>
-                </Td>
-              </Tr>
-            </Tbody>
-          ) : isStreaming ? (
-            <Tbody>
-              <Tr className="co-logs-table__row-info">
-                <Td colSpan={columns.length + 2} key="streaming-row">
-                  <div className="co-logs-table__row-streaming">
-                    <Alert
-                      variant="info"
-                      isInline
-                      isPlain
-                      title="Streaming Logs..."
-                    />
-                  </div>
-                </Td>
-              </Tr>
-            </Tbody>
-          ) : isLoading ? (
-            <Tbody>
-              <Tr className="co-logs-table__row-info">
-                <Td colSpan={columns.length + 2} key="loading-row">
-                  Loading...
-                </Td>
-              </Tr>
-            </Tbody>
-          ) : (
-            dataIsEmpty && (
-              <Tbody>
-                <Tr className="co-logs-table__row-info">
-                  <Td colSpan={columns.length + 2} key="data-empty-row">
-                    <CenteredContainer>
-                      <Alert
-                        variant="warning"
-                        isInline
-                        isPlain
-                        title="No datapoints found"
-                      />
-                    </CenteredContainer>
-                  </Td>
-                </Tr>
-              </Tbody>
-            )
           )}
+        </ToolbarContent>
+      </Toolbar>
 
-          {!isLoading &&
-            sortedData.map((value, index) => {
-              const isExpanded = expandedItems.has(rowIndex);
-              const severityClass = getSeverityClass(value.severity);
+      <TableComposable
+        aria-label="Logs Table"
+        variant="compact"
+        className="co-logs-table"
+        isStriped
+        isExpandable
+      >
+        <Thead>
+          <Tr>
+            <Th></Th>
+            <Th></Th>
+            {columns.map((column, index) => (
+              <Th
+                sort={column.sort ? getSortParams(index) : undefined}
+                key={column.title}
+              >
+                {column.title}
+              </Th>
+            ))}
+          </Tr>
+        </Thead>
 
-              const parentRow = (
-                <Tr
-                  key={`${value.timestamp}-${rowIndex}`}
-                  className={`co-logs-table__row ${severityClass} ${
-                    isExpanded ? 'co-logs-table__row-parent-expanded' : ''
-                  }`}
-                >
-                  <Td
-                    expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
+        {error ? (
+          <Tbody>
+            <Tr className="co-logs-table__row-info">
+              <Td colSpan={columns.length + 2} key="error-row">
+                <div className="co-logs-table__row-error">
+                  <Alert
+                    variant="danger"
+                    isInline
+                    isPlain
+                    title={(error as Error).message || String(error)}
                   />
-
-                  {columns.map((column, index) => {
-                    const content = (
-                      <LogRow
-                        data={value}
-                        title={column.title}
-                        showResources={showResources}
-                      />
-                    );
-
-                    return content ? (
-                      <Td
-                        key={`col-${column.title}-row-${index}`}
-                        className={getRowClassName(index)}
-                      >
-                        {content}
-                      </Td>
-                    ) : null;
-                  })}
-                </Tr>
-              );
-
-              const childRow = isExpanded ? (
-                <Tr
-                  className={`co-logs-table__row ${severityClass} co-logs-table__row-child-expanded`}
-                  isExpanded={true}
-                  key={`${value.timestamp}-${rowIndex}-child`}
-                >
-                  <Td colSpan={columns.length + 2}>
-                    <ExpandableRowContent>
-                      <LogDetail data={value.data} />
-                    </ExpandableRowContent>
-                  </Td>
-                </Tr>
-              ) : null;
-
-              // Expanded elements create an additional row in the table
-              rowIndex += isExpanded ? 2 : 1;
-
-              return (
-                <Tbody isExpanded={isExpanded} key={index}>
-                  {parentRow}
-                  {childRow}
-                </Tbody>
-              );
-            })}
-
-          {!isLoading && hasMoreLogsData && (
+                </div>
+              </Td>
+            </Tr>
+          </Tbody>
+        ) : isStreaming ? (
+          <Tbody>
+            <Tr className="co-logs-table__row-info">
+              <Td colSpan={columns.length + 2} key="streaming-row">
+                <div className="co-logs-table__row-streaming">
+                  <Alert
+                    variant="info"
+                    isInline
+                    isPlain
+                    title="Streaming Logs..."
+                  />
+                </div>
+              </Td>
+            </Tr>
+          </Tbody>
+        ) : isLoading ? (
+          <Tbody>
+            <Tr className="co-logs-table__row-info">
+              <Td colSpan={columns.length + 2} key="loading-row">
+                Loading...
+              </Td>
+            </Tr>
+          </Tbody>
+        ) : (
+          dataIsEmpty && (
             <Tbody>
-              <Tr
-                className="co-logs-table__row-info co-logs-table__row-more-data"
-                onClick={handleLoadMore}
-              >
-                <Td colSpan={columns.length + 2} key="more-data-row">
-                  More data available,{' '}
-                  {isLoadingMore ? 'loading...' : 'click to load'}
+              <Tr className="co-logs-table__row-info">
+                <Td colSpan={columns.length + 2} key="data-empty-row">
+                  <CenteredContainer>
+                    <Alert
+                      variant="warning"
+                      isInline
+                      isPlain
+                      title="No datapoints found"
+                    />
+                  </CenteredContainer>
                 </Td>
               </Tr>
             </Tbody>
-          )}
-        </TableComposable>
-      </div>
-    </>
+          )
+        )}
+
+        {!isLoading &&
+          sortedData.map((value, index) => {
+            const isExpanded = expandedItems.has(rowIndex);
+            const severityClass = getSeverityClass(value.severity);
+
+            const parentRow = (
+              <Tr
+                key={`${value.timestamp}-${rowIndex}`}
+                className={`co-logs-table__row ${severityClass} ${
+                  isExpanded ? 'co-logs-table__row-parent-expanded' : ''
+                }`}
+              >
+                <Td
+                  expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
+                />
+
+                {columns.map((column, index) => {
+                  const content = (
+                    <LogRow
+                      data={value}
+                      title={column.title}
+                      showResources={showResources}
+                    />
+                  );
+
+                  return content ? (
+                    <Td
+                      key={`col-${column.title}-row-${index}`}
+                      className={getRowClassName(index)}
+                    >
+                      {content}
+                    </Td>
+                  ) : null;
+                })}
+              </Tr>
+            );
+
+            const childRow = isExpanded ? (
+              <Tr
+                className={`co-logs-table__row ${severityClass} co-logs-table__row-child-expanded`}
+                isExpanded={true}
+                key={`${value.timestamp}-${rowIndex}-child`}
+              >
+                <Td colSpan={columns.length + 2}>
+                  <ExpandableRowContent>
+                    <LogDetail data={value.data} />
+                  </ExpandableRowContent>
+                </Td>
+              </Tr>
+            ) : null;
+
+            // Expanded elements create an additional row in the table
+            rowIndex += isExpanded ? 2 : 1;
+
+            return (
+              <Tbody isExpanded={isExpanded} key={index}>
+                {parentRow}
+                {childRow}
+              </Tbody>
+            );
+          })}
+
+        {!isLoading && hasMoreLogsData && (
+          <Tbody>
+            <Tr
+              className="co-logs-table__row-info co-logs-table__row-more-data"
+              onClick={handleLoadMore}
+            >
+              <Td colSpan={columns.length + 2} key="more-data-row">
+                More data available,{' '}
+                {isLoadingMore ? 'loading...' : 'click to load'}
+              </Td>
+            </Tr>
+          </Tbody>
+        )}
+      </TableComposable>
+    </div>
   );
 };

@@ -1,7 +1,7 @@
 import { Grid, PageSection } from '@patternfly/react-core';
 import * as React from 'react';
 import { useParams } from 'react-router';
-import { Severity } from 'src/severity';
+import { Severity } from '../severity';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
 import { useLogs } from '../hooks/useLogs';
