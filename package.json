@@ -17,12 +17,15 @@
     "ts-node": "ts-node -O '{\"module\":\"commonjs\"}'",
     "lint": "eslint ./src --fix",
     "cypress:open": "yarn cypress open",
-    "cypress:run": "yarn cypress run"
+    "cypress:run": "yarn cypress run",
+    "test:unit": "jest --config jest.config.js",
+    "test:unit:watch": "jest --config jest.config.js --watch"
   },
   "devDependencies": {
     "@openshift-console/dynamic-plugin-sdk": "^0.0.8",
     "@openshift-console/dynamic-plugin-sdk-webpack": "^0.0.6",
     "@patternfly/react-core": "4.175.4",
+    "@types/jest": "^28.1.4",
     "@types/node": "^17.0.21",
     "@types/react": "^17.0.37",
     "@types/react-dom": "17.0.17",
@@ -38,6 +41,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.4",
     "html-webpack-plugin": "^5.5.0",
+    "jest": "^28.1.2",
     "prettier": "^2.6.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
@@ -47,6 +51,7 @@
     "react-router-dom": "5.2.0",
     "serve": "^13.0.2",
     "style-loader": "^3.3.1",
+    "ts-jest": "^28.0.5",
     "ts-loader": "^9.2.8",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.2",
