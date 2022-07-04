@@ -9,6 +9,7 @@
     "build": "yarn clean && NODE_ENV=production yarn ts-node node_modules/.bin/webpack",
     "build:dev": "yarn clean && yarn ts-node node_modules/.bin/webpack",
     "build:standalone": "yarn clean:standalone && yarn ts-node node_modules/.bin/webpack --config webpack.standalone.config.ts",
+    "build:standalone:instrumented": "yarn clean:standalone && yarn ts-node node_modules/.bin/webpack --config webpack.standalone.instrumented.config.ts",
     "serve:standalone": "yarn serve -s ./dist-standalone -p 9003",
     "dev": "yarn ts-node node_modules/.bin/webpack serve",
     "dev:standalone": "yarn ts-node node_modules/.bin/webpack serve --config webpack.standalone.config.ts",
@@ -19,9 +20,12 @@
     "cypress:open": "yarn cypress open",
     "cypress:run": "yarn cypress run",
     "test:unit": "jest --config jest.config.js",
-    "test:unit:watch": "jest --config jest.config.js --watch"
+    "test:unit:watch": "jest --config jest.config.js --watch",
+    "test:unit:coverage": "jest --config jest.config.js --coverage"
   },
   "devDependencies": {
+    "@cypress/code-coverage": "^3.10.0",
+    "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
     "@openshift-console/dynamic-plugin-sdk": "^0.0.8",
     "@openshift-console/dynamic-plugin-sdk-webpack": "^0.0.6",
     "@patternfly/react-core": "4.175.4",
@@ -42,6 +46,7 @@
     "eslint-plugin-react": "^7.29.4",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^28.1.2",
+    "nyc": "^15.1.0",
     "prettier": "^2.6.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
@@ -77,5 +82,8 @@
     "@patternfly/react-charts": "^6.55.16",
     "@patternfly/react-icons": "^4.57.2",
     "@patternfly/react-table": "^4.71.16"
+  },
+  "nyc": {
+    "report-dir": "./coverage/cov-cypress"
   }
 }

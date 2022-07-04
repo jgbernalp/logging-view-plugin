@@ -6,4 +6,5 @@ module.exports = {
     '^.+\\.ts?$': 'ts-jest',
   },
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
+  coverageDirectory: '<rootDir>/coverage/cov-jest',
 };

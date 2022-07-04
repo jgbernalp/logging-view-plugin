@@ -50,7 +50,7 @@ yarn run test:unit
 In order to run the e2e tests, you need to build and run the plugin in standalone mode in one console.
 
 ```shell
-yarn build:standalone && yarn serve:standalone
+yarn build:standalone:instrumented && yarn serve:standalone
 ```
 
 and run the cypress tests in a different console.
