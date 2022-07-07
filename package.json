@@ -10,6 +10,7 @@
     "build:dev": "yarn clean && yarn ts-node node_modules/.bin/webpack",
     "build:standalone": "yarn clean:standalone && yarn ts-node node_modules/.bin/webpack --config webpack.standalone.config.ts",
     "build:standalone:instrumented": "yarn clean:standalone && yarn ts-node node_modules/.bin/webpack --config webpack.standalone.instrumented.config.ts",
+    "serve:dist": "yarn serve -s ./dist -p 9003",
     "serve:standalone": "yarn serve -s ./dist-standalone -p 9003",
     "dev": "yarn ts-node node_modules/.bin/webpack serve",
     "dev:standalone": "yarn ts-node node_modules/.bin/webpack serve --config webpack.standalone.config.ts",
@@ -71,7 +72,8 @@
     "description": "This plugin adds the logs UI to Openshift console",
     "exposedModules": {
       "LogsPage": "./pages/logs-page",
-      "LogsDetailPage": "./pages/logs-detail-page"
+      "LogsDetailPage": "./pages/logs-detail-page",
+      "LogActionsProvider": "./hooks/useLogActionsExtension"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

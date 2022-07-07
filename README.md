@@ -37,6 +37,20 @@ to `http://localhost:3100`. You can disable this by re-running the console with
 
 Navigate to <http://localhost:9000/monitoring/logs> to see the running plugin.
 
+#### Running start:console with Apple silicon and podman
+
+If you are using podman on a Mac with Apple silicon, `yarn run start:console`
+might fail since it runs an amd64 image. You can workaround the problem with
+[qemu-user-static](https://github.com/multiarch/qemu-user-static) by running
+these commands:
+
+```bash
+podman machine ssh
+sudo -i
+rpm-ostree install qemu-user-static
+systemctl reboot
+```
+
 ### Runing tests
 
 #### Unit tests
@@ -57,20 +71,6 @@ and run the cypress tests in a different console.
 
 ```shell
 yarn run cypress:run
-```
-
-#### Running start:console with Apple silicon and podman
-
-If you are using podman on a Mac with Apple silicon, `yarn run start:console`
-might fail since it runs an amd64 image. You can workaround the problem with
-[qemu-user-static](https://github.com/multiarch/qemu-user-static) by running
-these commands:
-
-```bash
-podman machine ssh
-sudo -i
-rpm-ostree install qemu-user-static
-systemctl reboot
 ```
 
 ## Deployment on cluster
