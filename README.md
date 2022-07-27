@@ -1,3 +1,5 @@
+# Moved to https://github.com/openshift/logging-view-plugin
+
 # Logging View Plugin for OpenShift Console
 
 This plugin adds the logging view into the 'observe' menu in the OpenShift console. It requires OpenShift 4.10.
